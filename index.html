@@ -6,10 +6,10 @@
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#0e7490">
 <title>Drip Calculator</title>
-<meta name="description" content="คำนวณจำนวน amp หรือ vial ของยาฉีดที่ผสมหยดต่อเนื่อง ต่อ 1 order จากสูตรผสม อัตราหยด และระยะเวลา">
+<meta name="description" content="คำนวณจำนวน amp หรือ vial ของยาฉีดที่ผสมหยดต่อเนื่อง ต่อ 1 order จากสูตรผสม อัตราหยด ระยะเวลา และ loading dose">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Drip Calculator - นับ amp ยาหยดต่อ order">
-<meta property="og:description" content="คำนวณจำนวน amp ยาฉีดที่ต้องใช้ต่อ 1 order จากสูตรผสม อัตราหยด และระยะเวลา">
+<meta property="og:description" content="คำนวณจำนวน amp ยาฉีดที่ต้องใช้ต่อ 1 order พร้อม Pharmacist note">
 <meta property="og:locale" content="th_TH">
 <meta name="author" content="DoseLogic">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%A7%3C/text%3E%3C/svg%3E">
@@ -30,12 +30,13 @@
     --warning-dark: #b45309;
     --danger: #ef4444;
     --info: #3b82f6;
+    --violet: #7c3aed;
     --bg: #f0fdfa;
     --card: #ffffff;
     --field: #fafafa;
     --text: #0f172a;
     --text-2: #475569;
-    --muted: #94a3b8;
+    --muted: #64748b;
     --border: #e2e8f0;
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
@@ -70,73 +71,42 @@
   }
 
   [hidden] { display: none !important; }
+  a { color: var(--primary-dark); }
 
   button, a { -webkit-tap-highlight-color: transparent; }
-  button:focus-visible, a:focus-visible, summary:focus-visible {
+  button:focus-visible, a:focus-visible, summary:focus-visible, [role="option"]:focus-visible {
     outline: 3px solid var(--primary);
     outline-offset: 2px;
   }
 
   /* ---------- Header ---------- */
   .header {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, var(--primary-deep) 100%);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-deep) 100%);
     color: #fff;
     padding: 14px 16px;
     position: sticky;
     top: 0;
     z-index: 50;
-    box-shadow: 0 4px 20px rgba(8, 145, 178, 0.3);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18);
   }
 
-  .header-inner {
-    max-width: 860px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .header-inner { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
 
   .header-icon {
-    width: 44px;
-    height: 44px;
-    flex-shrink: 0;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    display: grid;
-    place-items: center;
+    width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2);
+    display: grid; place-items: center;
   }
 
   .header-icon svg { width: 24px; height: 24px; }
-
   .header-text { flex: 1; min-width: 0; }
-
-  .header-text h1 {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    line-height: 1.25;
-  }
-
-  .header-text p {
-    font-size: 12.5px;
-    opacity: 0.92;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .header-text h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25; }
+  .header-text p { font-size: 12.5px; opacity: 0.92; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .header-btn {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-    display: grid;
-    place-items: center;
-    cursor: pointer;
+    width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px;
+    background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff; display: grid; place-items: center; cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease;
   }
 
@@ -144,72 +114,33 @@
   .header-btn svg { width: 20px; height: 20px; }
 
   /* ---------- Layout ---------- */
-  main {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+  main { max-width: 860px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
 
   .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    animation: fadeInUp 0.45s ease-out both;
-    transition: box-shadow 0.3s ease;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); animation: fadeInUp 0.45s ease-out backwards; transition: box-shadow 0.3s ease;
   }
 
   .card:hover { box-shadow: var(--shadow-lg); }
+  .card > .card-header { border-radius: var(--radius) var(--radius) 0 0; }
 
   .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
   }
 
-  .card-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 16px;
-    font-weight: 600;
-    min-width: 0;
-  }
+  .card-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; min-width: 0; }
 
   .card-title-icon {
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    color: #fff;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: grid; place-items: center;
+    color: #fff; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   }
 
   .card-title-icon svg { width: 19px; height: 19px; }
-
-  .card-body {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
+  .card-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 
   /* ---------- Form ---------- */
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .form-row.pkg { grid-template-columns: 1.25fr 1fr 0.8fr; }
 
   @media (max-width: 600px) {
@@ -217,52 +148,23 @@
     .form-row.pkg > :first-child { grid-column: 1 / -1; }
   }
 
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-  }
-
-  .form-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-2);
-  }
-
+  .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .form-label { font-size: 13px; font-weight: 500; color: var(--text-2); }
   .opt { font-weight: 400; color: var(--muted); font-size: 12px; }
 
   .form-input {
-    width: 100%;
-    min-width: 0;
-    min-height: 48px;
-    padding: 11px 13px;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-sm);
-    font: inherit;
-    font-size: 16px;
-    color: var(--text);
-    background: var(--field);
+    width: 100%; min-width: 0; min-height: 48px; padding: 11px 13px;
+    border: 2px solid var(--border); border-radius: var(--radius-sm);
+    font: inherit; font-size: 16px; color: var(--text); background: var(--field);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   }
 
-  .form-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: #fff;
-    box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.12);
-  }
-
+  .form-input:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.12); }
   .form-input::placeholder, .input-unit input::placeholder { color: var(--muted); font-weight: 400; }
 
   select.form-input {
-    appearance: none;
-    -webkit-appearance: none;
-    cursor: pointer;
-    background-image: var(--chevron);
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 18px;
+    appearance: none; -webkit-appearance: none; cursor: pointer;
+    background-image: var(--chevron); background-repeat: no-repeat; background-position: right 10px center; background-size: 18px;
     padding-right: 38px;
   }
 
@@ -271,437 +173,260 @@
   .form-row.when .form-input { padding-left: 10px; padding-right: 8px; }
 
   .input-unit {
-    display: flex;
-    align-items: stretch;
-    min-height: 48px;
-    border: 2px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--field);
-    overflow: hidden;
+    display: flex; align-items: stretch; min-height: 48px;
+    border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--field); overflow: hidden;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   }
 
-  .input-unit:focus-within {
-    border-color: var(--primary);
-    background: #fff;
-    box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.12);
-  }
+  .input-unit:focus-within { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.12); }
 
   .input-unit input {
-    flex: 1;
-    min-width: 0;
-    width: 100%;
-    border: 0;
-    background: transparent;
-    padding: 10px 12px;
-    font: inherit;
-    font-size: 16px;
-    color: var(--text);
-    outline: none;
+    flex: 1; min-width: 0; width: 100%; border: 0; background: transparent; padding: 10px 12px;
+    font: inherit; font-size: 16px; color: var(--text); outline: none;
   }
 
-  .input-unit .unit-tag,
-  .input-unit select {
-    flex-shrink: 0;
-    border: 0;
-    border-left: 2px solid var(--border);
-    background-color: #f1f5f9;
-    color: var(--text-2);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 0 12px;
-    display: flex;
-    align-items: center;
+  .input-unit .unit-tag, .input-unit select {
+    flex-shrink: 0; border: 0; border-left: 2px solid var(--border); background-color: #f1f5f9; color: var(--text-2);
+    font: inherit; font-size: 14px; font-weight: 600; padding: 0 12px; display: flex; align-items: center;
   }
 
   .input-unit select {
-    appearance: none;
-    -webkit-appearance: none;
-    cursor: pointer;
-    padding-right: 28px;
-    background-image: var(--chevron);
-    background-repeat: no-repeat;
-    background-position: right 7px center;
-    background-size: 15px;
+    appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 28px;
+    background-image: var(--chevron); background-repeat: no-repeat; background-position: right 7px center; background-size: 15px;
     max-width: 62%;
   }
 
-  .input-unit.big input {
-    font-family: var(--mono);
-    font-size: 22px;
-    font-weight: 700;
-    text-align: center;
-    color: var(--primary-dark);
-  }
-
-  /* Small, plain placeholders so an empty big field never looks filled in. */
-  .input-unit.big input::placeholder {
-    font-family: 'IBM Plex Sans Thai', sans-serif;
-    font-size: 15px;
-    font-weight: 400;
-    color: var(--muted);
-  }
-
-  .list-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px 10px;
-    flex-wrap: wrap;
-    font-size: 12.5px;
-    color: var(--text-2);
-  }
-
-  .list-status { display: flex; align-items: center; gap: 7px; min-width: 0; }
-
-  .dot {
-    width: 8px;
-    height: 8px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background: var(--muted);
-  }
-
-  .dot.ok { background: var(--success); animation: ping 2.2s infinite; }
-  .dot.warn { background: var(--warning); }
-  .dot.load { background: var(--info); animation: blink 1s infinite; }
-
-  .list-actions { display: flex; gap: 4px; flex-wrap: wrap; }
-
-  .link-btn {
-    border: 0;
-    background: none;
-    color: var(--primary-dark);
-    font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .link-btn:hover { background: var(--primary-soft); }
-  .link-btn svg { width: 14px; height: 14px; }
-
-  .drug-note {
-    font-size: 13px;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    color: #78350f;
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
-  }
+  .input-unit.big input { font-family: var(--mono); font-size: 22px; font-weight: 700; text-align: center; color: var(--primary-dark); }
+  .input-unit.big input::placeholder { font-family: 'IBM Plex Sans Thai', sans-serif; font-size: 15px; font-weight: 400; color: var(--muted); }
 
   .btn-example {
-    flex-shrink: 0;
-    border: 2px solid var(--primary-line);
-    background: var(--primary-soft);
-    color: var(--primary-dark);
-    font: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 6px 12px;
-    border-radius: var(--pill);
-    cursor: pointer;
+    flex-shrink: 0; border: 2px solid var(--primary-line); background: var(--primary-soft); color: var(--primary-dark);
+    font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: var(--pill); cursor: pointer;
     transition: transform 0.2s ease, background 0.2s ease;
   }
 
   .btn-example:hover { background: #cffafe; transform: translateY(-1px); }
 
-  /* ---------- Order boxes ---------- */
-  .box {
-    border-radius: var(--radius-sm);
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  .link-btn {
+    border: 0; background: none; color: var(--primary-dark); font: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; padding: 2px 4px; border-radius: 6px; text-decoration: underline; text-underline-offset: 3px;
   }
 
+  /* ---------- Drug search (combobox) ---------- */
+  .combo { position: relative; }
+  .combo-box { position: relative; }
+  .combo-box .form-input { padding-left: 42px; padding-right: 42px; }
+
+  .combo-box .search-icon {
+    position: absolute; left: 13px; top: 50%; width: 19px; height: 19px; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+
+  .combo-clear {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    width: 32px; height: 32px; border: 0; border-radius: 50%; background: #f1f5f9; color: var(--text-2);
+    font-size: 18px; line-height: 1; cursor: pointer;
+  }
+
+  .combo-list {
+    position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 40;
+    list-style: none; background: #fff; border: 2px solid var(--primary-line); border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg); max-height: 340px; overflow-y: auto; padding: 4px;
+  }
+
+  .combo-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 15px;
+  }
+
+  .combo-item .ci-name { font-weight: 600; }
+  .combo-item .ci-pkg { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+  .combo-item[aria-selected="true"] { background: var(--primary-soft); box-shadow: inset 3px 0 0 var(--primary); }
+  .combo-item.other { border-top: 2px dashed var(--border); margin-top: 4px; color: var(--primary-dark); font-weight: 600; }
+  .combo-empty { padding: 10px 12px; font-size: 13px; color: var(--muted); }
+
+  .drug-card {
+    border: 2px solid var(--primary-line); background: linear-gradient(135deg, #f0fdff 0%, #ecfeff 100%);
+    border-radius: var(--radius-sm); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+  }
+
+  .drug-card .dc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+  .drug-card .dc-name { font-size: 17px; font-weight: 700; color: var(--primary-deep); }
+  .drug-card .dc-pkg { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600;
+    padding: 2px 8px; border-radius: var(--pill); white-space: nowrap;
+  }
+
+  .badge.ok { background: #dcfce7; color: #166534; }
+  .badge.warn { background: #fef3c7; color: #92400e; }
+  .badge.edit { background: #ede9fe; color: #5b21b6; }
+
+  .src { font-size: 12px; color: var(--text-2); }
+  .src a { color: var(--primary-dark); }
+  .src .u { color: #b45309; font-weight: 600; }
+
+  .notes { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .notes li { font-size: 13px; background: #fffbeb; border: 1px solid #fde68a; color: #78350f; border-radius: var(--radius-sm); padding: 7px 10px; }
+  .notes li .src { color: #92400e; }
+
+  /* ---------- Order boxes ---------- */
+  .box { border-radius: var(--radius-sm); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .box.dil { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px solid var(--border); }
   .box.mix { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd; }
   .box.rate { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #fde68a; }
+  .box.special { background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 2px solid #e9d5ff; }
+  .box.special.has-preset { border-color: #c084fc; box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.15); }
   .box.time { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #bbf7d0; }
 
   .box.rate .box-label { color: var(--warning-dark); }
+  .box.special .box-label { color: #6b21a8; }
   .box.time .box-label { color: #166534; }
+  .box.dil .box-label { color: var(--text-2); }
 
-  .box-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
+  .box-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .box-label { font-size: 14px; font-weight: 600; color: var(--primary-dark); }
 
-  .mix-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: center;
-    gap: 8px;
-  }
-
-  .mix-colon {
-    font-family: var(--mono);
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--primary);
-    line-height: 1;
-  }
-
-  .mix-row .input-unit, .box .input-unit { background: #fff; }
+  .mix-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
+  .mix-row.single { grid-template-columns: minmax(0, 1fr); }
+  .mix-row .input-unit input { padding: 10px 6px; }
+  .mix-row .input-unit select { padding-left: 8px; padding-right: 22px; background-position: right 4px center; }
+  /* the search list must float above the cards below it */
+  .card-drug { position: relative; z-index: 5; }
+  .mix-colon { font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--primary); line-height: 1; }
+  .box .input-unit { background: #fff; }
 
   .hint { font-size: 13px; color: var(--text-2); min-height: 1.2em; }
   .hint b { color: var(--primary-dark); }
+  .hint.warn { color: #92400e; }
 
-  .seg {
-    display: flex;
-    background: #fff;
-    border-radius: var(--pill);
-    padding: 4px;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
-  }
+  .seg { display: flex; background: #fff; border-radius: var(--pill); padding: 4px; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06); }
 
   .seg button {
-    border: 0;
-    background: transparent;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-2);
-    padding: 6px 14px;
-    border-radius: var(--pill);
-    cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
+    border: 0; background: transparent; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-2);
+    padding: 6px 14px; border-radius: var(--pill); cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
   }
 
-  .seg button[aria-pressed="true"] {
-    background: var(--warning);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
-  }
+  .seg button[aria-pressed="true"] { background: var(--warning-dark); color: #fff; box-shadow: 0 2px 8px rgba(180, 83, 9, 0.3); }
+  .seg.violet button[aria-pressed="true"] { background: var(--violet); box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3); }
 
   .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 
   .chip {
-    border: 2px solid #86efac;
-    background: #fff;
-    color: #166534;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 3px 12px;
-    border-radius: var(--pill);
-    cursor: pointer;
+    border: 2px solid #86efac; background: #fff; color: #166534; font: inherit; font-size: 13px; font-weight: 600;
+    padding: 3px 12px; border-radius: var(--pill); cursor: pointer;
   }
 
-  .chip[aria-pressed="true"] { background: var(--success); border-color: var(--success); color: #fff; }
+  .chip[aria-pressed="true"] { background: #047857; border-color: #047857; color: #fff; }
 
-  details.advanced {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-sm);
-    padding: 0 14px;
+  /* diluent and mix choices */
+  .opt-chip {
+    display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0;
+    border: 2px solid var(--border); background: #fff; color: var(--text); font: inherit; text-align: left;
+    padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer; min-height: 44px; justify-content: center;
+    transition: border-color 0.15s ease, background 0.15s ease;
   }
+
+  .opt-chip .oc-main { font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+  .opt-chip .oc-sub { font-size: 11.5px; color: var(--text-2); font-weight: 500; }
+  .opt-chip:hover { border-color: var(--primary-line); }
+  .opt-chip[aria-checked="true"], .opt-chip[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); box-shadow: inset 0 0 0 1px var(--primary); }
+  .opt-chip[aria-checked="true"] .oc-main::before, .opt-chip[aria-pressed="true"] .oc-main::before { content: '✓'; color: var(--primary-dark); }
+  .opt-chip .u-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warning); display: inline-block; }
+
+  details.advanced { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 0 14px; }
 
   details.advanced summary {
-    cursor: pointer;
-    padding: 12px 0;
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--text-2);
-    list-style: none;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    cursor: pointer; padding: 12px 0; font-weight: 600; font-size: 14px; color: var(--text-2);
+    list-style: none; display: flex; align-items: center; gap: 10px;
   }
 
   details.advanced summary::-webkit-details-marker { display: none; }
 
   details.advanced summary::before {
-    content: '';
-    width: 8px;
-    height: 8px;
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    transform: rotate(-45deg);
-    transition: transform 0.2s ease;
+    content: ''; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg); transition: transform 0.2s ease;
   }
 
   details.advanced[open] summary::before { transform: rotate(45deg); }
 
-  .adv-badge {
-    font-size: 11.5px;
-    font-weight: 600;
-    color: #fff;
-    background: var(--accent);
-    border-radius: var(--pill);
-    padding: 1px 8px;
-  }
-
+  .adv-badge { font-size: 11.5px; font-weight: 600; color: #fff; background: #c2410c; border-radius: var(--pill); padding: 1px 8px; }
   .adv-body { display: flex; flex-direction: column; gap: 14px; padding-bottom: 14px; }
   .small { font-size: 12px; color: var(--muted); }
 
-  .check {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    font-size: 14px;
-    cursor: pointer;
+  .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+  .check input { width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0; accent-color: var(--primary); }
+  .check.strong { font-weight: 600; }
+
+  .sub-panel {
+    background: rgba(255, 255, 255, 0.7); border: 1px solid #e9d5ff; border-radius: var(--radius-sm);
+    padding: 12px; display: flex; flex-direction: column; gap: 10px;
   }
 
-  .check input {
-    width: 20px;
-    height: 20px;
-    margin-top: 2px;
-    flex-shrink: 0;
-    accent-color: var(--primary);
+  .inline-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+  .inline-row .input-unit { flex: 1 1 140px; }
+  .btn-regimen {
+    border: 2px solid #c084fc; background: #fff; color: #6b21a8; font: inherit; font-size: 13px; font-weight: 600;
+    padding: 5px 12px; border-radius: var(--pill); cursor: pointer;
   }
+
+  .btn-regimen:hover { background: #faf5ff; }
 
   /* ---------- Result ---------- */
-  .result-card .card-header {
-    background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
-    color: #fff;
-    border-bottom: 0;
-  }
-
+  .result-card .card-header { background: linear-gradient(135deg, #047857 0%, #065f46 100%); color: #fff; border-bottom: 0; }
   .result-card .card-title-icon { background: rgba(255, 255, 255, 0.2); }
 
   .result-empty {
-    text-align: center;
-    color: var(--text-2);
-    background: #f8fafc;
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-sm);
-    padding: 18px;
-    font-size: 14px;
+    text-align: center; color: var(--text-2); background: #f8fafc; border: 2px dashed var(--border);
+    border-radius: var(--radius-sm); padding: 18px; font-size: 14px;
   }
 
   .result-empty b { color: var(--text); display: block; font-size: 15px; margin-bottom: 4px; }
 
-  .hero {
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-    border: 2px solid #86efac;
-    border-radius: var(--radius);
-    padding: 18px 14px;
-    text-align: center;
-  }
-
+  .hero { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #86efac; border-radius: var(--radius); padding: 18px 14px; text-align: center; }
   .hero.flash { animation: flash 0.8s ease-out; }
-
   .hero-label { font-size: 13px; font-weight: 600; color: #166534; }
-
-  .hero-value {
-    font-family: var(--mono);
-    font-size: 54px;
-    font-weight: 700;
-    color: var(--success-dark);
-    line-height: 1.1;
-  }
-
+  .hero-value { font-family: var(--mono); font-size: 54px; font-weight: 700; color: #047857; line-height: 1.1; }
   .hero-value small { font-size: 22px; margin-left: 6px; }
-
   .hero-drug { font-size: 14px; font-weight: 500; color: var(--text-2); }
   .hero-sub { margin-top: 6px; font-size: 15px; font-weight: 600; }
+  .hero-parts { margin-top: 8px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .hero-parts span { font-size: 13px; font-weight: 600; background: #fff; border: 1px solid #bbf7d0; color: #166534; padding: 2px 10px; border-radius: var(--pill); }
 
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   @media (min-width: 700px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
-  .stat {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 8px;
-    text-align: center;
-  }
-
+  .stat { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 8px; text-align: center; }
   .stat-label { font-size: 12px; font-weight: 600; color: var(--text-2); }
-
-  .stat-value {
-    font-family: var(--mono);
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1.3;
-    overflow-wrap: anywhere;
-  }
-
+  .stat-value { font-family: var(--mono); font-size: 22px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
   .stat-value.text { font-family: inherit; font-size: 17px; }
   .stat-unit { font-size: 12px; color: var(--muted); }
-
   .stat.conc .stat-value { color: var(--primary-dark); }
-  .stat.time .stat-value { color: var(--accent); }
+  .stat.time .stat-value { color: #c2410c; }
   .stat.vol .stat-value { color: var(--info); }
   .stat.got .stat-value { color: var(--warning-dark); }
 
-  .dose-line {
-    font-size: 14px;
-    background: var(--primary-soft);
-    border: 1px solid var(--primary-line);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    color: var(--primary-deep);
-  }
+  .dose-lines { display: flex; flex-direction: column; gap: 6px; }
+  .dose-line { font-size: 14px; background: var(--primary-soft); border: 1px solid var(--primary-line); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--primary-deep); }
+  .dose-line.load { background: #faf5ff; border-color: #e9d5ff; color: #581c87; }
 
   .alerts { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-
-  .alert {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    font-size: 14px;
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    border: 1px solid;
-  }
-
+  .alert { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid; }
   .alert svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 3px; }
   .alert.warn { background: #fffbeb; border-color: #fde68a; color: #78350f; }
   .alert.info { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
 
   /* ---------- Note ---------- */
-  .note-card .card-header {
-    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-    border-bottom: 2px solid #c7d2fe;
-  }
-
+  .note-card .card-header { background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-bottom: 2px solid #c7d2fe; }
   .note-card .card-title-icon { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
-
-  .note-content {
-    font-family: var(--mono);
-    font-size: 12.5px;
-    line-height: 1.85;
-    overflow-wrap: anywhere;
-    padding: 16px;
-    background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
-  }
-
-  /* One div per note line; wrapped text hangs under its own bullet. */
+  .note-content { font-family: var(--mono); font-size: 12.5px; line-height: 1.85; overflow-wrap: anywhere; padding: 16px; background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%); }
   .note-content .nl { white-space: pre-wrap; }
-  .note-hint { font-size: 12px; color: var(--muted); padding: 0 16px 14px; background: #f5f7ff; }
+  .note-hint { font-size: 12px; color: var(--muted); padding: 0 16px 14px; background: #f5f7ff; border-radius: 0 0 var(--radius) var(--radius); }
 
   .btn-copy {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 2px solid #c7d2fe;
-    background: #fff;
-    color: #4f46e5;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 6px 12px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; border: 2px solid #c7d2fe; background: #fff; color: #4f46e5;
+    font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;
   }
 
   .btn-copy svg { width: 16px; height: 16px; }
@@ -709,99 +434,43 @@
   .btn-copy.done { border-color: #86efac; color: var(--success-dark); }
 
   /* ---------- Schedule ---------- */
-  .schedule-card .card-header {
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    border-bottom: 2px solid #93c5fd;
-  }
-
+  .schedule-card .card-header { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-bottom: 2px solid #93c5fd; }
   .schedule-card .card-title-icon { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-
-  .table-wrap { overflow-x: auto; }
-
+  .table-wrap { overflow-x: auto; border-radius: 0 0 var(--radius) var(--radius); }
   .schedule-table { width: 100%; border-collapse: collapse; }
 
   .schedule-table th {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-2);
-    text-align: left;
-    padding: 10px 10px;
-    background: #f8fafc;
-    border-bottom: 2px solid var(--border);
-    white-space: nowrap;
+    font-size: 12px; font-weight: 600; color: var(--text-2); text-align: left; padding: 10px;
+    background: #f8fafc; border-bottom: 2px solid var(--border); white-space: nowrap;
   }
 
   .schedule-table th:first-child, .schedule-table td:first-child { text-align: center; width: 54px; }
-
-  .schedule-table td {
-    padding: 10px 10px;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
-    vertical-align: top;
-  }
-
+  .schedule-table td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
   .schedule-table .t { display: block; font-family: var(--mono); font-weight: 700; color: var(--primary-dark); }
   .schedule-table .d { display: block; font-size: 12px; color: var(--muted); }
 
   .bag-no {
-    display: inline-grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: #fff;
-    font-weight: 700;
-    font-size: 13px;
-    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+    display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-deep) 100%); color: #fff; font-weight: 700; font-size: 13px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
   }
 
-  tr.carry .bag-no { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); font-size: 11px; box-shadow: none; }
-  tr.last .bag-no { background: linear-gradient(135deg, var(--warning) 0%, var(--accent) 100%); }
+  tr.carry .bag-no { background: linear-gradient(135deg, #64748b 0%, #475569 100%); font-size: 11px; box-shadow: none; }
+  tr.load .bag-no { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); font-size: 11px; }
+  tr.last .bag-no { background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%); }
 
-  .tag {
-    display: inline-block;
-    font-size: 11.5px;
-    font-weight: 600;
-    padding: 1px 8px;
-    border-radius: var(--pill);
-    margin-top: 4px;
-  }
-
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 1px 8px; border-radius: var(--pill); margin-top: 4px; }
   .tag.empty { background: #dcfce7; color: #166534; }
   .tag.hang { background: #ffedd5; color: #9a3412; }
   .tag.end { background: #fee2e2; color: #991b1b; }
+  .tag.load { background: #f3e8ff; color: #6b21a8; }
 
   /* ---------- Footer ---------- */
-  .footer {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #fff;
-    padding: 28px 16px;
-    margin-top: 32px;
-  }
-
+  .footer { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; padding: 28px 16px; margin-top: 32px; }
   .footer-inner { max-width: 860px; margin: 0 auto; }
-
-  .footer-main {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 18px;
-  }
-
+  .footer-main { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 18px; }
   .footer-brand { display: flex; align-items: center; gap: 12px; }
-
-  .footer-icon {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    display: grid;
-    place-items: center;
-  }
-
+  .footer-icon { width: 46px; height: 46px; border-radius: 12px; background: rgba(255, 255, 255, 0.1); display: grid; place-items: center; }
   .footer-icon svg { width: 25px; height: 25px; }
   .footer-brand h3 { font-size: 18px; font-weight: 700; }
   .footer-brand p { font-size: 12px; opacity: 0.7; }
@@ -809,33 +478,13 @@
   .footer-info-label { font-size: 12px; opacity: 0.6; }
   .footer-info-org { font-size: 16px; font-weight: 700; }
   .footer-info-version { font-size: 11px; opacity: 0.5; margin-top: 2px; }
-
   @media (max-width: 600px) { .footer-info { text-align: left; } }
-
-  .footer-divider {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 16px;
-    text-align: center;
-    font-size: 11.5px;
-    opacity: 0.6;
-  }
+  .footer-divider { border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 16px; text-align: center; font-size: 11.5px; opacity: 0.6; }
 
   /* ---------- Motion ---------- */
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-  @keyframes ping {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
-    70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-  }
-  @keyframes blink { 50% { opacity: 0.25; } }
-  @keyframes flash {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
-    100% { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; transition: none !important; }
-  }
+  @keyframes flash { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); } 100% { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
@@ -863,7 +512,7 @@
 <main>
 
   <!-- 1. ยาและขนาดบรรจุ -->
-  <section class="card" aria-labelledby="t-drug">
+  <section class="card card-drug" aria-labelledby="t-drug">
     <div class="card-header">
       <div class="card-title" id="t-drug">
         <span class="card-title-icon" aria-hidden="true">
@@ -874,60 +523,62 @@
       <button class="btn-example" id="btnExample" type="button">ลองตัวอย่าง</button>
     </div>
     <div class="card-body">
-      <div class="form-group">
-        <label class="form-label" for="drugSelect">เลือกยาจากรายการ</label>
-        <select id="drugSelect" class="form-input"></select>
-        <div class="list-bar">
-          <span class="list-status"><span class="dot" id="listDot"></span><span id="listStatus">กำลังเตรียมรายการยา</span></span>
-          <span class="list-actions">
-            <button class="link-btn" id="btnReload" type="button">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              โหลดรายการใหม่
-            </button>
-            <a class="link-btn" id="linkSheet" href="#" target="_blank" rel="noopener" hidden>
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-              เพิ่ม/แก้รายการยา
-            </a>
-          </span>
+      <div class="form-group combo">
+        <label class="form-label" for="drugSearch">ค้นหายา</label>
+        <div class="combo-box">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
+          <input id="drugSearch" class="form-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+            aria-controls="drugList" placeholder="พิมพ์ชื่อยา เช่น nor, kcl, amio" autocomplete="off" spellcheck="false">
+          <button type="button" class="combo-clear" id="drugClear" aria-label="ล้างการเลือกยา" hidden>×</button>
         </div>
+        <ul id="drugList" class="combo-list" role="listbox" aria-label="รายการยา" hidden></ul>
       </div>
 
-      <div class="form-row pkg">
-        <div class="form-group">
-          <label class="form-label" for="drugName">ชื่อยา</label>
-          <input id="drugName" class="form-input" type="text" placeholder="เช่น Norepinephrine" autocomplete="off">
+      <div class="drug-card" id="drugCard" hidden>
+        <div class="dc-top">
+          <div>
+            <div class="dc-name" id="dcName"></div>
+            <div class="dc-pkg" id="dcPkg"></div>
+          </div>
+          <span id="dcBadge"></span>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="pkgAmount">ยาต่อ 1 หลอด</label>
-          <div class="input-unit">
-            <input id="pkgAmount" type="text" inputmode="decimal" placeholder="เช่น 4" autocomplete="off">
-            <select id="pkgUnit" aria-label="หน่วยของยา"></select>
+        <div class="src" id="dcSrc"></div>
+        <div><button class="link-btn" id="btnEditPkg" type="button">แก้ขนาดบรรจุ</button></div>
+      </div>
+
+      <div id="pkgFields" hidden>
+        <div class="form-row pkg">
+          <div class="form-group">
+            <label class="form-label" for="drugName">ชื่อยา</label>
+            <input id="drugName" class="form-input" type="text" placeholder="เช่น Norepinephrine" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="pkgAmount">ยาต่อ 1 หลอด</label>
+            <div class="input-unit">
+              <input id="pkgAmount" type="text" inputmode="decimal" placeholder="เช่น 4" autocomplete="off">
+              <select id="pkgUnit" aria-label="หน่วยของยา"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="pkgVolume">ปริมาตรต่อหลอด</label>
+            <div class="input-unit">
+              <input id="pkgVolume" type="text" inputmode="decimal" placeholder="เช่น 4" autocomplete="off">
+              <span class="unit-tag">ml</span>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="pkgVolume">ปริมาตรต่อหลอด</label>
-          <div class="input-unit">
-            <input id="pkgVolume" type="text" inputmode="decimal" placeholder="เช่น 4" autocomplete="off">
-            <span class="unit-tag">ml</span>
+        <div class="form-row" style="margin-top:12px">
+          <div class="form-group">
+            <label class="form-label" for="pkgForm">ชนิดบรรจุ</label>
+            <select id="pkgForm" class="form-input">
+              <option value="amp">amp</option>
+              <option value="vial">vial</option>
+            </select>
           </div>
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="pkgForm">ชนิดบรรจุ</label>
-          <select id="pkgForm" class="form-input">
-            <option value="amp">amp</option>
-            <option value="vial">vial</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="diluent">สารละลาย <span class="opt">ไม่บังคับ</span></label>
-          <input id="diluent" class="form-input" type="text" placeholder="เช่น D5W, NSS" autocomplete="off">
-        </div>
-      </div>
-
-      <p class="drug-note" id="drugNote" hidden></p>
+      <ul class="notes" id="drugNotes"></ul>
     </div>
   </section>
 
@@ -943,19 +594,27 @@
     </div>
     <div class="card-body">
 
+      <div class="box dil">
+        <div class="box-label" id="dilLabel">สารน้ำที่ใช้ผสม</div>
+        <div class="chips" id="dilChips" role="radiogroup" aria-labelledby="dilLabel"></div>
+        <input id="dilOther" class="form-input" type="text" placeholder="ระบุสารน้ำ เช่น D10W" autocomplete="off" hidden>
+        <p class="hint" id="dilNote"></p>
+      </div>
+
       <div class="box mix">
-        <div class="box-label">สูตรผสม (ยา : สารละลาย)</div>
-        <div class="mix-row">
+        <div class="box-label" id="mixLabel">สูตรผสม (ยา : สารละลาย)</div>
+        <div class="chips" id="mixChips"></div>
+        <div class="mix-row" id="mixRow">
           <div class="input-unit big">
-            <input id="mixAmount" type="text" inputmode="decimal" placeholder="8" aria-label="ปริมาณยาที่ผสม" autocomplete="off">
+            <input id="mixAmount" type="text" inputmode="decimal" placeholder="เช่น 8" aria-label="ปริมาณยาที่ผสม" autocomplete="off">
             <select id="mixUnit" aria-label="หน่วยของยาที่ผสม">
               <option value="drug">mg</option>
               <option value="cont">amp</option>
             </select>
           </div>
-          <span class="mix-colon" aria-hidden="true">:</span>
-          <div class="input-unit big">
-            <input id="mixVolume" type="text" inputmode="decimal" placeholder="500" aria-label="ปริมาตรสารละลาย (ml)" autocomplete="off">
+          <span class="mix-colon" id="mixColon" aria-hidden="true">:</span>
+          <div class="input-unit big" id="mixVolumeWrap">
+            <input id="mixVolume" type="text" inputmode="decimal" placeholder="เช่น 500" aria-label="ปริมาตรสารละลาย (ml)" autocomplete="off">
             <span class="unit-tag">ml</span>
           </div>
         </div>
@@ -972,13 +631,13 @@
         </div>
         <div id="rateMlhr">
           <div class="input-unit big">
-            <input id="rate" type="text" inputmode="decimal" placeholder="30" aria-label="อัตรา ml/hr" autocomplete="off">
+            <input id="rate" type="text" inputmode="decimal" placeholder="เช่น 30" aria-label="อัตรา ml/hr" autocomplete="off">
             <span class="unit-tag">ml/hr</span>
           </div>
         </div>
         <div id="rateDose" hidden>
           <div class="input-unit big">
-            <input id="doseValue" type="text" inputmode="decimal" placeholder="0.1" aria-label="ขนาดยาที่สั่ง" autocomplete="off">
+            <input id="doseValue" type="text" inputmode="decimal" placeholder="เช่น 0.1" aria-label="ขนาดยาที่สั่ง" autocomplete="off">
             <select id="doseUnit" aria-label="หน่วยขนาดยา"></select>
           </div>
           <div class="hint" id="rateCalc" style="margin-top:8px"></div>
@@ -986,6 +645,64 @@
         <div class="form-group">
           <label class="form-label" for="weight">น้ำหนักผู้ป่วย (kg) <span class="opt">ใส่เมื่อสั่งเป็นต่อ kg</span></label>
           <input id="weight" class="form-input" type="text" inputmode="decimal" placeholder="ไม่บังคับ" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="box special" id="specialBox">
+        <div class="box-head">
+          <span class="box-label">ส่วนพิเศษ: loading dose และเปลี่ยนอัตรา</span>
+          <button class="btn-regimen" id="btnRegimen" type="button" hidden>ใส่สูตรตามแหล่งอ้างอิง</button>
+        </div>
+        <p class="hint" id="specialHint"></p>
+
+        <label class="check strong"><input type="checkbox" id="loadOn"> <span>มี loading dose</span></label>
+        <div class="sub-panel" id="loadFields" hidden>
+          <div class="inline-row">
+            <span>ขนาด</span>
+            <div class="input-unit">
+              <input id="loadAmount" type="text" inputmode="decimal" placeholder="เช่น 150" aria-label="ขนาด loading" autocomplete="off">
+              <select id="loadUnit" aria-label="หน่วย loading"></select>
+            </div>
+            <label class="check"><input type="checkbox" id="loadPerKg"> <span>ต่อ kg</span></label>
+          </div>
+          <div class="seg violet" role="group" aria-label="วิธีให้ loading">
+            <button type="button" data-lmode="separate" aria-pressed="true">ผสมแยก</button>
+            <button type="button" data-lmode="same" aria-pressed="false">จากถุงเดียวกัน</button>
+          </div>
+          <div class="inline-row" id="loadVolRow">
+            <span>ผสมใน</span>
+            <div class="input-unit">
+              <input id="loadVolume" type="text" inputmode="decimal" placeholder="0 = ไม่เจือจาง" aria-label="ปริมาตรสารน้ำของ loading" autocomplete="off">
+              <span class="unit-tag">ml</span>
+            </div>
+          </div>
+          <div class="inline-row">
+            <span>เวลาให้</span>
+            <div class="input-unit">
+              <input id="loadMinutes" type="text" inputmode="decimal" placeholder="0 = IV push" aria-label="เวลาให้ loading (นาที)" autocomplete="off">
+              <span class="unit-tag">นาที</span>
+            </div>
+          </div>
+          <div class="hint" id="loadHint"></div>
+        </div>
+
+        <label class="check strong"><input type="checkbox" id="step2On"> <span>เปลี่ยนอัตราระหว่างให้</span></label>
+        <div class="sub-panel" id="step2Fields" hidden>
+          <div class="inline-row">
+            <span>หลังเริ่มหยด</span>
+            <div class="input-unit">
+              <input id="step2After" type="text" inputmode="decimal" placeholder="เช่น 6" aria-label="เปลี่ยนอัตราหลังกี่ชั่วโมง" autocomplete="off">
+              <span class="unit-tag">ชม.</span>
+            </div>
+          </div>
+          <div class="inline-row">
+            <span>เปลี่ยนเป็น</span>
+            <div class="input-unit">
+              <input id="step2Value" type="text" inputmode="decimal" placeholder="เช่น 0.5" aria-label="อัตราที่เปลี่ยน" autocomplete="off">
+              <span class="unit-tag" id="step2Unit">ml/hr</span>
+            </div>
+          </div>
+          <div class="hint" id="step2Hint"></div>
         </div>
       </div>
 
@@ -1052,23 +769,22 @@
     </div>
     <div class="card-body">
       <div class="result-empty" id="resultEmpty"></div>
-      <div id="resultMain" hidden>
-        <div class="card-body" style="padding:0">
-          <div class="hero" id="hero">
-            <div class="hero-label" id="heroLabel">ต้องใช้ใน 24 ชม.</div>
-            <div class="hero-value"><span id="heroCount">0</span><small id="heroForm">amp</small></div>
-            <div class="hero-drug" id="heroDrug"></div>
-            <div class="hero-sub" id="heroSub"></div>
-          </div>
-          <div class="stats">
-            <div class="stat conc"><div class="stat-label">ความเข้มข้น</div><div class="stat-value" id="statConc">-</div><div class="stat-unit" id="statConcUnit"></div></div>
-            <div class="stat time"><div class="stat-label">1 ถุงหยดได้</div><div class="stat-value text" id="statBagTime">-</div><div class="stat-unit" id="statBagVol"></div></div>
-            <div class="stat vol"><div class="stat-label">ปริมาตรที่ให้</div><div class="stat-value" id="statTotalVol">-</div><div class="stat-unit" id="statTotalVolUnit"></div></div>
-            <div class="stat got"><div class="stat-label">ยาที่ได้รับจริง</div><div class="stat-value" id="statInfused">-</div><div class="stat-unit" id="statInfusedUnit"></div></div>
-          </div>
-          <div class="dose-line" id="doseLine"></div>
-          <ul class="alerts" id="alerts"></ul>
+      <div id="resultMain" class="card-body" style="padding:0" hidden>
+        <div class="hero" id="hero">
+          <div class="hero-label" id="heroLabel">ต้องใช้ใน 24 ชม.</div>
+          <div class="hero-value"><span id="heroCount">0</span><small id="heroForm">amp</small></div>
+          <div class="hero-drug" id="heroDrug"></div>
+          <div class="hero-sub" id="heroSub"></div>
+          <div class="hero-parts" id="heroParts"></div>
         </div>
+        <div class="stats">
+          <div class="stat conc"><div class="stat-label">ความเข้มข้น</div><div class="stat-value" id="statConc">-</div><div class="stat-unit" id="statConcUnit"></div></div>
+          <div class="stat time"><div class="stat-label" id="statBagLabel">1 ถุงหยดได้</div><div class="stat-value text" id="statBagTime">-</div><div class="stat-unit" id="statBagVol"></div></div>
+          <div class="stat vol"><div class="stat-label">ปริมาตรจากถุง</div><div class="stat-value" id="statTotalVol">-</div><div class="stat-unit" id="statTotalVolUnit"></div></div>
+          <div class="stat got"><div class="stat-label">ยาที่ได้รับจริง</div><div class="stat-value" id="statInfused">-</div><div class="stat-unit" id="statInfusedUnit"></div></div>
+        </div>
+        <div class="dose-lines" id="doseLines"></div>
+        <ul class="alerts" id="alerts"></ul>
       </div>
     </div>
   </section>
@@ -1131,11 +847,11 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.0 | November 2026</div>
+        <div class="footer-info-version">Version 1.1 | November 2026</div>
       </div>
     </div>
     <div class="footer-divider">
-      © 2026 Drip Calculator | ใช้ประมาณการจำนวนยาที่ต้องเตรียมและเบิกจ่ายเท่านั้น ตรวจสอบคำสั่งใช้ยา ขนาดบรรจุ และความคงตัวของยาทุกครั้ง
+      © 2026 Drip Calculator | ใช้ประมาณการจำนวนยาที่ต้องเตรียมและเบิกจ่ายเท่านั้น ค่าตั้งต้นของยาแต่ละตัวมาจากเอกสารที่ระบุไว้ ตรวจกับคำสั่งใช้ยาและแนวทาง HAD ของโรงพยาบาลทุกครั้ง
     </div>
   </div>
 </footer>
@@ -1143,35 +859,197 @@
 <script>
 'use strict';
 
-/* ========================= ตั้งค่า (แก้ตรงนี้) ========================= */
-// ID ของ Google Sheet รายการยา = ข้อความยาวในลิงก์ระหว่าง /d/ กับ /edit
-// ชีตต้องแชร์แบบ "ทุกคนที่มีลิงก์ = ผู้ดู" แอปจึงอ่านได้
-const SHEET_ID = '';
-const SHEET_TAB = 'ยา';
+/* =====================================================================
+   DATA: drugs, diluents and the documents every default comes from.
+   Add or fix a drug here; each value carries its source key.
+   ===================================================================== */
+// DATA-START
+const DM = setid => 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=' + setid;
+const SOURCES = {
+  line: { t: 'ข้อความ LINE พี่เภสัช 5 พ.ย. 2569' },
+  user: { t: 'ตารางสูตรทั่วไปที่ส่งมา', unverified: true },
+  warin: { t: 'บัญชียา รพ.วารินชำราบ ปีงบ 2562' },
+  nlem: { t: 'บัญชียาหลักแห่งชาติ 2562' },
+  pnk: { t: 'แนวทางการผสม HAD รพ.โพนนาแก้ว', u: 'https://pnkhospital.moph.go.th/Wordpress/e-Form/phr/04.%E0%B9%81%E0%B8%99%E0%B8%A7%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%9C%E0%B8%AA%E0%B8%A1%20HAD.pdf' },
+  pck: { t: 'HAD card Norepinephrine รพ.พระจอมเกล้า', u: 'https://phrachomklao.moph.go.th/wp-content/plugins/download-attachments/includes/download.php?id=8271' },
+  si: { t: 'คู่มือยาความเสี่ยงสูง รพ.ศิริราช', u: 'https://www2.si.mahidol.ac.th/km/download/3722' },
+  levophed: { t: 'ฉลาก Levophed', u: 'https://labeling.pfizer.com/ShowLabeling.aspx?id=20428' },
+  amio: { t: 'ฉลาก Amiodarone injection', u: 'https://www.henryschein.com/assets/Medical/1049860.pdf' },
+  who_mg: { t: 'WHO MgSO4 (RH086)', u: 'https://extranet.who.int/prequal/sites/default/files/whopar_files/RH086part4.pdf' },
+  pfz_mg: { t: 'ฉลาก MgSO4 in dextrose (Pfizer)', u: 'https://www.pfizermedical.com/magnesium-sulfate/dosage-admin' },
+  raschke: { t: 'Raschke 1993 Ann Intern Med', u: 'https://pubmed.ncbi.nlm.nih.gov/8214998/' },
+  dm_epi: { t: 'ฉลาก Adrenalin', u: DM('3b7a4364-668d-4eb2-a20c-04adc35aabe4') },
+  dm_dopa: { t: 'ฉลาก Dopamine', u: DM('1f306ad2-3606-4525-5a8a-ce78f426c1a2') },
+  dm_dobu: { t: 'ฉลาก Dobutamine', u: DM('89becb0c-da60-4f43-0a98-29ff7a9eca58') },
+  dm_vaso: { t: 'ฉลาก Vasostrict', u: DM('b1147beb-743e-4c62-8927-91192447f8b8') },
+  dm_kcl: { t: 'ฉลาก KCl concentrate', u: DM('559a0a8c-a8fe-40a5-b196-21f9308780ab') },
+  dm_mg: { t: 'ฉลาก MgSO4 50%', u: DM('5176ed24-015e-43fe-9eb4-85098debf5f1') },
+  dm_ca: { t: 'ฉลาก Calcium gluconate', u: DM('16307c00-d0d5-4e05-821f-17b0c1a29fc9') },
+  dm_hep: { t: 'ฉลาก Heparin', u: DM('c8c4edd2-ee9e-4558-6b8c-b83adc242a0a') },
+  dm_ins: { t: 'ฉลาก Humulin R', u: DM('b519bd83-038c-4ec5-a231-a51ec5cc291f') },
+  dm_nica: { t: 'ฉลาก Nicardipine', u: DM('372a4381-7302-4df7-81bb-a9521907f867') },
+  dm_ntg: { t: 'ฉลาก Nitroglycerin', u: DM('b8af0974-33ea-4dd5-9ff7-3b61272aeb25') },
+  dm_mida: { t: 'ฉลาก Midazolam', u: DM('1abda8b8-48a8-4995-af86-39220d1aa240') },
+  dm_prop: { t: 'ฉลาก Propofol', u: DM('3acf8e6c-827d-11e2-9e96-0800200c9a66') },
+  dm_dex: { t: 'ฉลาก Precedex', u: DM('4419162d-81d4-49bd-96de-1729440bdb74') },
+  dm_oxy: { t: 'ฉลาก Pitocin', u: DM('6e5a66fc-e507-497c-b5ce-44a8c95898ad') },
+};
 
-// รายการตั้งต้น ใช้เมื่อยังโหลดชีตไม่ได้
-const STARTER_DRUGS = [
-  { name: 'Norepinephrine', amount: 4, unit: 'mg', volume: 4, form: 'amp', mixAmount: 8, mixVolume: 500 },
-  { name: 'Potassium chloride (KCl)', amount: 20, unit: 'mEq', volume: 10, form: 'amp' },
-  { name: 'Adrenaline (Epinephrine)', amount: 1, unit: 'mg', volume: 1, form: 'amp' },
+const DILUENTS = {
+  NSS: { label: 'NSS', sub: '0.9% NaCl' },
+  D5W: { label: 'D5W', sub: '5% dextrose' },
+  D5S: { label: 'D5S', sub: 'D5 ใน NSS' },
+  LRS: { label: 'LRS', sub: "Lactated Ringer's" },
+  SWFI: { label: 'SWFI', sub: 'น้ำกลั่นสำหรับฉีด' },
+  none: { label: 'ไม่เจือจาง', sub: 'ยาเปล่าในไซริงจ์' },
+};
+const ALL_DILUENTS = ['NSS', 'D5W', 'D5S', 'LRS', 'SWFI', 'none'];
+
+// Each entry = one package. mixes: a = drug per bag (package unit, or containers when unit: 'cont'),
+// v = bag volume in ml (final volume, the way Thai HAD tables write it); addDrugVol: the drug volume is added on top.
+const DRUGS = [
+  { id: 'ne4', name: 'Norepinephrine', alias: 'noradrenaline levophed ne nor', amount: 4, unit: 'mg', volume: 4, form: 'amp', pkgSrc: ['warin', 'line'],
+    diluents: ['D5W', 'D5S'], dilSrc: ['levophed', 'si', 'pck'], dilNote: 'ผสมในสารน้ำที่มี dextrose เท่านั้น ไม่แนะนำ NSS อย่างเดียว',
+    mixes: [{ a: 4, v: 250, src: ['pnk', 'pck'] }, { a: 8, v: 250, src: ['pnk', 'pck'] }, { a: 4, v: 100, src: ['pnk', 'pck'] }, { a: 4, v: 500, src: ['pck'] }, { a: 8, v: 500, src: ['line'] }],
+    orderUnit: 'mcg/min',
+    notes: [{ t: 'ผสมแล้วคงตัว 24 ชม. ที่อุณหภูมิห้อง', src: ['pck', 'si'] }] },
+  { id: 'epi1', name: 'Adrenaline (Epinephrine)', alias: 'epinephrine adrenaline epi', amount: 1, unit: 'mg', volume: 1, form: 'amp', pkgSrc: ['warin', 'line'],
+    diluents: ['D5W', 'D5S'], dilSrc: ['dm_epi'], dilNote: 'หยดต่อเนื่องให้ผสมใน D5W หรือ D5S ไม่แนะนำ NSS อย่างเดียว',
+    mixes: [{ a: 1, v: 1000, src: ['dm_epi'] }, { a: 4, v: 250, src: ['user'] }],
+    orderUnit: 'mcg/kg/min',
+    notes: [{ t: 'ผสมแล้วคงตัว 4 ชม. ที่อุณหภูมิห้อง หรือ 24 ชม. ในตู้เย็น', src: ['dm_epi'] }, { t: 'septic shock 0.05 ถึง 2 mcg/kg/min ปรับทุก 10 ถึง 15 นาที', src: ['dm_epi'] }] },
+  { id: 'dopa', name: 'Dopamine', alias: 'dopamine dopa', amount: 250, unit: 'mg', volume: 10, form: 'amp', pkgSrc: ['warin', 'user'],
+    diluents: ['NSS', 'D5W', 'D5S'], dilSrc: ['dm_dopa', 'pnk'],
+    mixes: [{ a: 250, v: 250, label: '1:1', src: ['pnk'] }, { a: 500, v: 250, label: '2:1', src: ['pnk'] }],
+    orderUnit: 'mcg/kg/min',
+    notes: [{ t: 'เริ่ม 2 ถึง 5 mcg/kg/min ปรับทีละ 5 ถึง 10 ไม่เกิน 50 mcg/kg/min', src: ['dm_dopa'] }] },
+  { id: 'dobu', name: 'Dobutamine', alias: 'dobutamine dobu', amount: 250, unit: 'mg', volume: 20, form: 'amp', pkgSrc: ['warin'],
+    diluents: ['NSS', 'D5W', 'D5S', 'LRS'], dilSrc: ['dm_dobu'],
+    mixes: [{ a: 250, v: 250, src: ['user'] }],
+    orderUnit: 'mcg/kg/min',
+    notes: [{ t: 'ปกติ 2.5 ถึง 15 mcg/kg/min บางรายถึง 40', src: ['dm_dobu'] }, { t: 'เคยใช้เข้มข้นสูงสุด 5 mg/ml (250 mg/50 ml)', src: ['dm_dobu'] }] },
+  { id: 'vaso', name: 'Vasopressin', alias: 'vasopressin', amount: 20, unit: 'unit', volume: 1, form: 'vial', pkgSrc: ['dm_vaso'],
+    diluents: ['NSS', 'D5W'], dilSrc: ['dm_vaso'],
+    mixes: [{ a: 20, v: 100, src: ['dm_vaso'] }, { a: 20, v: 200, src: ['dm_vaso'] }],
+    orderUnit: 'unit/min',
+    notes: [{ t: 'septic shock 0.01 ถึง 0.07 unit/min เริ่ม 0.01 ปรับทีละ 0.005 ทุก 10 ถึง 15 นาที', src: ['dm_vaso'] }] },
+  { id: 'kcl', name: 'Potassium chloride (KCl)', alias: 'kcl potassium chloride k', amount: 20, unit: 'mEq', volume: 10, form: 'vial', pkgSrc: ['warin', 'line'],
+    diluents: ['NSS', 'D5W'], dilSrc: ['dm_kcl', 'pnk'], dilNote: 'ภาวะวิกฤต ฉลากแนะนำผสมใน NSS มากกว่าสารน้ำที่มี dextrose เพราะ dextrose ลดระดับโพแทสเซียม',
+    mixes: [{ a: 40, v: 1000, addDrugVol: true, src: ['pnk'] }, { a: 10, v: 100, src: ['user'] }],
+    orderUnit: 'mEq/hr',
+    notes: [{ t: 'ต้องเจือจางก่อนให้เสมอ', src: ['dm_kcl'] }] },
+  { id: 'mg50', name: 'Magnesium sulfate 50%', alias: 'mgso4 magnesium sulfate mg 50', amount: 1, unit: 'g', volume: 2, form: 'amp', pkgSrc: ['warin'],
+    diluents: ['D5W', 'NSS'], dilSrc: ['dm_mg', 'pnk'],
+    mixes: [{ a: 2, v: 100, src: ['pnk'] }, { a: 4, v: 250, src: ['dm_mg'] }, { a: 20, v: 1000, src: ['user'] }],
+    orderUnit: 'g/hr',
+    loading: { amount: 4, unit: 'g', perKg: false, mode: 'separate', volume: 100, minutes: 20, src: ['who_mg', 'pfz_mg'], note: 'ปริมาตรผสม 100 ml ใส่ไว้ก่อน ตรวจกับ รพ.' },
+    notes: [{ t: 'ครรภ์เป็นพิษ: loading 4 g ใน 15 ถึง 20 นาที แล้วหยด 1 ถึง 2 g/hr', src: ['who_mg', 'pfz_mg'] }] },
+  { id: 'mg10', name: 'Magnesium sulfate 10%', alias: 'mgso4 magnesium sulfate mg 10', amount: 1, unit: 'g', volume: 10, form: 'amp', pkgSrc: ['warin'],
+    diluents: ['D5W', 'NSS'], dilSrc: ['dm_mg', 'pnk'],
+    mixes: [{ a: 2, v: 100, src: ['pnk'] }, { a: 4, v: 250, src: ['dm_mg'] }],
+    orderUnit: 'g/hr',
+    loading: { amount: 4, unit: 'g', perKg: false, mode: 'separate', volume: 100, minutes: 20, src: ['who_mg', 'pfz_mg'], note: 'ปริมาตรผสม 100 ml ใส่ไว้ก่อน ตรวจกับ รพ.' },
+    notes: [{ t: 'ครรภ์เป็นพิษ: loading 4 g ใน 15 ถึง 20 นาที แล้วหยด 1 ถึง 2 g/hr', src: ['who_mg', 'pfz_mg'] }] },
+  { id: 'cagl', name: 'Calcium gluconate 10%', alias: 'calcium gluconate ca', amount: 1, unit: 'g', volume: 10, form: 'amp', pkgSrc: ['warin'],
+    diluents: ['D5W', 'NSS'], dilSrc: ['dm_ca', 'pnk'],
+    mixes: [{ a: 1, v: 100, src: ['pnk'] }, { a: 2, v: 100, src: ['pnk'] }],
+    orderUnit: 'g/hr',
+    notes: [{ t: 'ต้องเจือจางและให้ช้า พร้อมเฝ้าคลื่นหัวใจ', src: ['dm_ca'] }] },
+  { id: 'bicarb', name: 'Sodium bicarbonate 7.5%', alias: 'nahco3 sodium bicarbonate bicarb', amount: 44.6, unit: 'mEq', volume: 50, form: 'amp', pkgSrc: ['nlem', 'warin'],
+    diluents: null, dilSrc: [], dilNote: 'ยังไม่พบข้อมูลสารน้ำในแหล่งที่ตรวจ ตรวจกับแนวทางของ รพ.',
+    mixes: [{ a: 3, unit: 'cont', v: 1000, src: ['user'] }],
+    orderUnit: 'mEq/hr', notes: [] },
+  { id: 'hep', name: 'Heparin', alias: 'heparin', amount: 25000, unit: 'unit', volume: 5, form: 'vial', pkgSrc: ['warin', 'user'],
+    diluents: ['NSS'], dilSrc: ['dm_hep'], dilNote: 'ฉลากที่ตรวจระบุการผสมใน NSS',
+    mixes: [{ a: 25000, v: 250, src: ['user'] }, { a: 25000, v: 500, src: ['user'] }],
+    orderUnit: 'unit/hr',
+    loading: { amount: 80, unit: 'unit', perKg: true, mode: 'separate', volume: 0, minutes: 0, src: ['raschke'] },
+    notes: [{ t: 'สูตรตามน้ำหนัก: bolus 80 unit/kg แล้วหยด 18 unit/kg/hr ปรับตาม aPTT', src: ['raschke'] }] },
+  { id: 'ri', name: 'Regular insulin (RI)', alias: 'insulin ri regular humulin', amount: 1000, unit: 'unit', volume: 10, form: 'vial', pkgSrc: ['warin'],
+    diluents: ['NSS'], dilSrc: ['dm_ins', 'pnk'], multiDose: true,
+    mixes: [{ a: 100, v: 100, src: ['pnk', 'dm_ins'] }],
+    orderUnit: 'unit/hr',
+    notes: [{ t: 'หยดทางหลอดเลือดดำที่ความเข้มข้น 0.1 ถึง 1 unit/ml ใน NSS', src: ['dm_ins'] }, { t: 'ขวด 10 ml ใช้ได้หลายครั้ง จึงติ๊ก multi-dose ไว้ให้', src: [] }] },
+  { id: 'nica10', name: 'Nicardipine', alias: 'nicardipine cardene', amount: 10, unit: 'mg', volume: 10, form: 'amp', pkgSrc: ['warin'],
+    diluents: ['NSS', 'D5W', 'D5S'], dilSrc: ['dm_nica', 'pnk'],
+    mixes: [{ a: 10, v: 100, src: ['user'] }, { a: 20, v: 100, src: ['pnk'] }],
+    orderUnit: 'mg/hr', notes: [] },
+  { id: 'nica2', name: 'Nicardipine', alias: 'nicardipine cardene', amount: 2, unit: 'mg', volume: 2, form: 'amp', pkgSrc: ['warin'],
+    diluents: ['NSS', 'D5W', 'D5S'], dilSrc: ['dm_nica', 'pnk'],
+    mixes: [{ a: 10, v: 100, src: ['user'] }, { a: 20, v: 100, src: ['pnk'] }],
+    orderUnit: 'mg/hr', notes: [] },
+  { id: 'ntg', name: 'Nitroglycerin (NTG)', alias: 'nitroglycerin ntg glyceryl trinitrate', amount: 50, unit: 'mg', volume: 10, form: 'amp', pkgSrc: ['warin', 'dm_ntg'],
+    diluents: ['D5W', 'NSS'], dilSrc: ['dm_ntg'], dilNote: 'ฉลาก: ผสมในขวดแก้ว และห้ามผสมกับยาอื่น',
+    mixes: [{ a: 50, v: 500, src: ['dm_ntg'] }, { a: 50, v: 250, src: ['dm_ntg', 'user'] }],
+    orderUnit: 'mcg/min', notes: [] },
+  { id: 'amio', name: 'Amiodarone', alias: 'amiodarone cordarone amio', amount: 150, unit: 'mg', volume: 3, form: 'amp', pkgSrc: ['warin', 'amio'],
+    diluents: ['D5W'], dilSrc: ['amio', 'pnk'], dilNote: 'D5W เท่านั้น ถ้าให้นานเกิน 2 ชม. ใช้ขวดแก้วหรือ polyolefin',
+    mixes: [{ a: 900, v: 500, src: ['amio'] }, { a: 600, v: 300, src: ['pnk'] }],
+    orderUnit: 'mg/min',
+    loading: { amount: 150, unit: 'mg', perKg: false, mode: 'separate', volume: 100, minutes: 10, src: ['amio', 'pnk'] },
+    regimen: { mix: 0, doseValue: 1, doseUnit: 'mg/min', step2After: 6, step2Value: 0.5, hours: 24, src: ['amio'] },
+    notes: [{ t: 'ทาง peripheral ถ้าให้นานเกิน 1 ชม. ห้ามเข้มข้นเกิน 2 mg/ml ยกเว้นทาง central line', src: ['amio'] }, { t: 'อัตราช่วงแรกไม่เกิน 30 mg/min', src: ['amio'] }] },
+  { id: 'mo', name: 'Morphine', alias: 'morphine mo', amount: 10, unit: 'mg', volume: 1, form: 'amp', pkgSrc: ['warin'],
+    diluents: ['NSS', 'D5W'], dilSrc: ['pnk'],
+    mixes: [{ a: 100, v: 100, src: ['pnk'] }, { a: 50, v: 50, src: ['user'] }],
+    orderUnit: 'mg/hr', notes: [] },
+  { id: 'fen', name: 'Fentanyl', alias: 'fentanyl', amount: 100, unit: 'mcg', volume: 2, form: 'amp', pkgSrc: ['warin', 'user'],
+    diluents: null, dilSrc: [], dilNote: 'ยังไม่พบข้อมูลสารน้ำในแหล่งที่ตรวจ ตรวจกับแนวทางของ รพ.',
+    mixes: [{ a: 500, v: 50, src: ['user'] }],
+    orderUnit: 'mcg/hr', notes: [] },
+  { id: 'mida', name: 'Midazolam', alias: 'midazolam dormicum', amount: 15, unit: 'mg', volume: 3, form: 'amp', pkgSrc: ['warin', 'user'],
+    diluents: ['NSS', 'D5W'], dilSrc: ['dm_mida'], dilNote: 'LRS ใช้ได้ไม่เกิน 4 ชม.',
+    mixes: [{ a: 50, v: 100, src: ['dm_mida'] }, { a: 50, v: 50, src: ['user'] }],
+    orderUnit: 'mg/hr', notes: [] },
+  { id: 'prop', name: 'Propofol 1%', alias: 'propofol diprivan', amount: 200, unit: 'mg', volume: 20, form: 'amp', pkgSrc: ['user'],
+    diluents: ['none', 'D5W'], dilSrc: ['dm_prop'], dilNote: 'ปกติไม่ต้องเจือจาง ถ้าเจือจางใช้ D5W เท่านั้น และไม่จางกว่า 2 mg/ml',
+    mixes: [{ a: 1, unit: 'cont', v: 0, src: ['dm_prop'] }],
+    orderUnit: 'mcg/kg/min', notes: [] },
+  { id: 'dex', name: 'Dexmedetomidine', alias: 'dexmedetomidine precedex dex', amount: 200, unit: 'mcg', volume: 2, form: 'vial', pkgSrc: ['dm_dex'],
+    diluents: ['NSS'], dilSrc: ['dm_dex'], dilNote: 'เจือจางใน NSS ให้ได้ 4 mcg/ml',
+    mixes: [{ a: 200, v: 50, src: ['dm_dex'] }, { a: 400, v: 100, src: ['dm_dex'] }],
+    orderUnit: 'mcg/kg/hr',
+    loading: { amount: 1, unit: 'mcg', perKg: true, mode: 'same', volume: 0, minutes: 10, src: ['dm_dex'] },
+    notes: [{ t: 'ICU: loading 1 mcg/kg ใน 10 นาที แล้ว 0.2 ถึง 0.7 mcg/kg/hr', src: ['dm_dex'] }, { t: 'ไม่ใช้หยดต่อเนื่องนานเกิน 24 ชม.', src: ['dm_dex'] }] },
+  { id: 'oxy', name: 'Oxytocin', alias: 'oxytocin syntocinon pitocin', amount: 10, unit: 'IU', volume: 1, form: 'amp', pkgSrc: ['warin'],
+    diluents: ['NSS', 'LRS', 'D5W'], dilSrc: ['dm_oxy', 'pnk'],
+    mixes: [{ a: 10, v: 1000, src: ['dm_oxy', 'pnk'] }, { a: 10, v: 500, src: ['dm_oxy'] }],
+    orderUnit: 'mU/min',
+    notes: [{ t: 'เริ่ม 0.5 ถึง 1 mU/min เพิ่มทีละ 1 ถึง 2 mU/min ทุก 30 ถึง 60 นาที เกิน 9 ถึง 10 mU/min แทบไม่จำเป็น', src: ['dm_oxy'] }] },
 ];
+// DATA-END
 
-/* ========================= CALC ENGINE ========================= */
-// CALC-START (pure functions, no DOM; tested in tests/test-calc.mjs)
+/* =====================================================================
+   CALC ENGINE: pure functions, no DOM (tested in tests/).
+   ===================================================================== */
+// CALC-START
+const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const MASS_TO_MG = { g: 1000, mg: 1, mcg: 0.001 };
-const isMass = u => Object.prototype.hasOwnProperty.call(MASS_TO_MG, u);
+const UNIT_TO_U = { unit: 1, IU: 1, mU: 0.001 };
+const isMass = u => has(MASS_TO_MG, u);
+const isUnitFam = u => has(UNIT_TO_U, u);
 const isPos = v => typeof v === 'number' && Number.isFinite(v) && v > 0;
+const nonNeg = v => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
 // Round up while ignoring floating-point noise (1.1 / 0.1 = 11.000000000000002 -> 11).
 const ceilSafe = x => Math.ceil(Math.round(x * 1e9) / 1e9);
 
 function convertAmount(value, from, to) {
   if (from === to) return value;
   if (isMass(from) && isMass(to)) return value * MASS_TO_MG[from] / MASS_TO_MG[to];
+  if (isUnitFam(from) && isUnitFam(to)) return value * UNIT_TO_U[from] / UNIT_TO_U[to];
   return NaN;
+}
+
+// Units an amount of this drug can be written in.
+function familyUnits(unit) {
+  if (isMass(unit)) return ['mcg', 'mg', 'g'];
+  if (isUnitFam(unit)) return [unit === 'mU' ? 'unit' : unit, 'mU'];
+  return [unit];
 }
 
 function doseUnitsFor(unit) {
   if (isMass(unit)) return ['mcg/min', 'mcg/kg/min', 'mcg/hr', 'mcg/kg/hr', 'mg/min', 'mg/hr', 'mg/kg/hr', 'g/hr'];
+  if (isUnitFam(unit)) { const u = unit === 'mU' ? 'unit' : unit; return [u + '/hr', u + '/kg/hr', u + '/min', 'mU/min']; }
   return [unit + '/hr', unit + '/kg/hr', unit + '/min', unit + '/kg/min'];
 }
 
@@ -1189,108 +1067,176 @@ function dosePerHour(value, doseUnit, pkgUnit, weight) {
   return v;
 }
 
-// p: pkgAmount, pkgUnit, pkgVolume, mixAmount, mixUnit ('drug' | 'cont'), mixVolume,
-//    rateMode ('mlhr' | 'dose'), rate, doseValue, doseUnit, weight, hours,
-//    carryVolume, carryHung, maxHang, includeDrugVolume, multiDose
+/* p: pkgAmount, pkgUnit, pkgVolume, diluent ('none' = undiluted in a syringe),
+      mixAmount, mixUnit ('drug' | 'cont'), mixVolume, includeDrugVolume,
+      rateMode ('mlhr' | 'dose'), rate, doseValue, doseUnit, weight,
+      step2On, step2After (hours after the drip starts), step2Value (same unit as the first rate),
+      loadOn, loadAmount, loadUnit, loadPerKg, loadMode ('separate' | 'same'), loadVolume, loadMinutes,
+      hours, carryVolume, carryHung, maxHang, multiDose */
 function computeDrip(p) {
+  const undiluted = p.diluent === 'none';
+  const dose = p.rateMode === 'dose';
   const missing = [];
   if (!isPos(p.pkgAmount)) missing.push('ยาต่อ 1 หลอด');
-  if (!isPos(p.mixAmount)) missing.push('ปริมาณยาที่ผสม');
-  if (!isPos(p.mixVolume)) missing.push('ปริมาตรสารละลาย');
-  if (p.rateMode === 'dose') {
-    if (!isPos(p.doseValue)) missing.push('ขนาดยาที่สั่ง');
-    else if (parseDoseUnit(p.doseUnit).perKg && !isPos(p.weight)) missing.push('น้ำหนักผู้ป่วย');
-  } else if (!isPos(p.rate)) {
-    missing.push('อัตรา ml/hr');
+  if (undiluted && !isPos(p.pkgVolume)) missing.push('ปริมาตรต่อหลอด');
+  if (!isPos(p.mixAmount)) missing.push(undiluted ? 'ปริมาณยาต่อไซริงจ์' : 'ปริมาณยาที่ผสม');
+  if (!undiluted && !isPos(p.mixVolume)) missing.push('ปริมาตรสารละลาย');
+  if (dose) { if (!isPos(p.doseValue)) missing.push('ขนาดยาที่สั่ง'); }
+  else if (!isPos(p.rate)) missing.push('อัตรา ml/hr');
+  if (p.step2On) {
+    if (!isPos(p.step2After)) missing.push('เปลี่ยนอัตราหลังกี่ชั่วโมง');
+    if (!isPos(p.step2Value)) missing.push('อัตราที่เปลี่ยน');
   }
+  if (p.loadOn && !isPos(p.loadAmount)) missing.push('ขนาด loading');
+  const needWeight = (dose && parseDoseUnit(p.doseUnit).perKg) || (p.loadOn && p.loadPerKg);
+  if (needWeight && !isPos(p.weight)) missing.push('น้ำหนักผู้ป่วย');
   if (!isPos(p.hours)) missing.push('ระยะเวลา');
   if (missing.length) return { ok: false, missing };
 
-  const A = p.pkgAmount;
+  const A = p.pkgAmount, unit = p.pkgUnit;
   const mixDrug = p.mixUnit === 'cont' ? p.mixAmount * A : p.mixAmount; // drug per bag, package unit
   const contPerBagExact = mixDrug / A;
   const contPerBag = ceilSafe(contPerBagExact);
   const drugVolume = isPos(p.pkgVolume) ? contPerBagExact * p.pkgVolume : null;
-  const bagVolume = p.mixVolume + (p.includeDrugVolume && drugVolume ? drugVolume : 0);
+  const bagVolume = undiluted ? drugVolume : p.mixVolume + (p.includeDrugVolume && drugVolume ? drugVolume : 0);
   const conc = mixDrug / bagVolume; // package unit per ml
 
-  let rate = p.rate;
-  if (p.rateMode === 'dose') {
-    const perHour = dosePerHour(p.doseValue, p.doseUnit, p.pkgUnit, p.weight);
-    if (!Number.isFinite(perHour)) return { ok: false, missing: ['หน่วยขนาดยาที่ตรงกับหน่วยของยา'] };
-    rate = perHour / conc;
+  const toMlHr = v => (dose ? dosePerHour(v, p.doseUnit, unit, p.weight) / conc : v);
+  const rate = toMlHr(dose ? p.doseValue : p.rate);
+  const rate2 = p.step2On ? toMlHr(p.step2Value) : null;
+  if (!Number.isFinite(rate) || (p.step2On && !Number.isFinite(rate2))) return { ok: false, missing: ['หน่วยขนาดยาที่ตรงกับหน่วยของยา'] };
+
+  let loading = null;
+  if (p.loadOn) {
+    let drug = convertAmount(p.loadAmount, p.loadUnit || unit, unit);
+    if (!Number.isFinite(drug)) return { ok: false, missing: ['หน่วย loading ที่ตรงกับหน่วยของยา'] };
+    if (p.loadPerKg) drug *= p.weight;
+    const hours = nonNeg(p.loadMinutes) / 60;
+    if (p.loadMode === 'same') {
+      const volume = drug / conc;
+      loading = { mode: 'same', drug, volume, hours, rate: hours > 0 ? volume / hours : null, containersExact: 0, containers: 0 };
+    } else {
+      const drugVol = isPos(p.pkgVolume) ? drug / A * p.pkgVolume : null;
+      const diluentVolume = nonNeg(p.loadVolume);
+      const volume = diluentVolume > 0 ? diluentVolume + (p.includeDrugVolume && drugVol ? drugVol : 0) : (drugVol || 0);
+      loading = { mode: 'separate', drug, diluentVolume, drugVolume: drugVol, volume, hours,
+        rate: hours > 0 && volume > 0 ? volume / hours : null, containersExact: drug / A, containers: ceilSafe(drug / A) };
+    }
   }
 
+  // Timeline in hours from the start of the order. The continuous drip starts once the loading is over.
+  // plan = the whole plan with no end; segs = the part inside this order.
   const H = p.hours;
-  const emptyHours = bagVolume / rate;
-  const hangLimited = isPos(p.maxHang) && p.maxHang < emptyHours - 1e-9;
-  const bagHours = hangLimited ? p.maxHang : emptyHours;
-  // A bag already hanging runs until it is empty, or until the bag-change time is up
-  // (counting the hours it has already hung).
+  const loadEnd = loading ? loading.hours : 0;
+  const plan = [];
+  if (loading && loading.mode === 'same' && loadEnd > 0) plan.push({ t0: 0, t1: loadEnd, rate: loading.rate });
+  else if (loadEnd > 0) plan.push({ t0: 0, t1: loadEnd, rate: 0 });
+  const step2At = p.step2On ? loadEnd + p.step2After : null;
+  if (p.step2On) {
+    plan.push({ t0: loadEnd, t1: step2At, rate });
+    plan.push({ t0: step2At, t1: Infinity, rate: rate2 });
+  } else plan.push({ t0: loadEnd, t1: Infinity, rate });
+  const segs = plan.filter(s => s.t0 < H).map(s => ({ t0: s.t0, t1: Math.min(s.t1, H), rate: s.rate })).filter(s => s.t1 > s.t0);
+  const maintStart = Math.min(H, loadEnd);
+
+  // A bag still hanging at time t: when would it run out, or be changed, if the plan went on?
+  const project = (b, t) => {
+    let left = b.left;
+    for (const s of plan) {
+      if (s.t1 <= t) continue;
+      const a = Math.max(t, s.t0);
+      if (b.until <= a) return { at: b.until, by: 'hang', left };
+      const span = Math.min(s.t1, b.until) - a;
+      if (s.rate > 0) {
+        if (left / s.rate <= span) return { at: a + left / s.rate, by: 'empty', left: 0 };
+        left -= s.rate * span;
+      }
+      if (b.until <= s.t1) return { at: b.until, by: 'hang', left };
+      t = s.t1;
+    }
+    return { at: Infinity, by: 'empty', left };
+  };
+
+  // Walk the order bag by bag: a bag ends when it is empty, when the change time is up, or when the order ends.
+  const hang = isPos(p.maxHang) ? p.maxHang : Infinity;
   const carry = isPos(p.carryVolume) ? p.carryVolume : 0;
   const carryHung = isPos(p.carryHung) ? p.carryHung : 0;
-  const carryEmptyHours = carry / rate;
-  const carryAllowed = isPos(p.maxHang) ? Math.max(0, p.maxHang - carryHung) : Infinity;
-  const carryHangLimited = carry > 0 && carryAllowed < carryEmptyHours - 1e-9;
-  const carryHours = carry ? Math.min(carryEmptyHours, carryAllowed) : 0;
-  const newHours = H - carryHours;
-  const bags = newHours > 1e-9 ? ceilSafe(newHours / bagHours) : 0;
-  const containersIfReuse = bags === 0 ? 0 : ceilSafe(bags * contPerBagExact);
-  const containers = bags === 0 ? 0 : p.multiDose ? containersIfReuse : bags * contPerBag;
-
   const schedule = [];
-  if (carry) {
-    const end = Math.min(carryHours, H);
-    schedule.push({
-      carry: true, start: 0, end, used: rate * end, left: carry - rate * end, hung: carryHung + end,
-      endsBy: carryHours <= H + 1e-9 ? (carryHangLimited ? 'hang' : 'empty') : 'orderEnd',
-    });
+  let bag = null, bags = 0, used = 0;
+  const tiny = v => v <= 1e-9 * Math.max(1, bagVolume);
+  const openBag = t => {
+    bags++;
+    bag = { no: bags, start: t, size: bagVolume, left: bagVolume, until: t + hang, before: 0 };
+  };
+  const closeBag = (t, endsBy) => {
+    schedule.push({ carry: !!bag.carry, no: bag.no, start: bag.start, end: t, used: bag.size - bag.left, left: bag.left,
+      endsBy, hung: bag.before + (t - bag.start), projEnd: t, projBy: endsBy, projLeft: bag.left });
+    bag = null;
+  };
+  if (carry) bag = { carry: true, start: 0, size: carry, left: carry, until: hang - carryHung, before: carryHung };
+
+  if (loading && loading.mode === 'same' && loading.hours === 0) { // loading pushed from the bag at t = 0
+    let need = loading.volume;
+    while (need > 1e-12) {
+      if (!bag) openBag(0);
+      if (bag.until <= 1e-9) { closeBag(0, 'hang'); continue; }
+      const take = Math.min(bag.left, need);
+      bag.left -= take; need -= take; used += take;
+      if (tiny(bag.left)) { bag.left = 0; closeBag(0, 'empty'); }
+      if (bags > 5000) return { ok: false, missing: ['ค่าที่ใส่ทำให้ต้องใช้ถุงมากผิดปกติ ตรวจตัวเลขอีกครั้ง'] };
+    }
   }
-  for (let i = 0; i < bags; i++) {
-    const start = carryHours + i * bagHours;
-    const fullEnd = start + bagHours;
-    const end = Math.min(fullEnd, H);
-    const used = rate * (end - start);
-    schedule.push({
-      no: i + 1, start, end, used, left: bagVolume - used, hung: end - start,
-      endsBy: fullEnd <= H + 1e-9 ? (hangLimited ? 'hang' : 'empty') : 'orderEnd',
-    });
+  for (const s of segs) {
+    let t = s.t0;
+    while (t < s.t1 - 1e-9) {
+      if (!(s.rate > 0)) { // nothing runs from a bag; a hanging bag still ages
+        if (bag && bag.until < s.t1) closeBag(Math.max(t, bag.until), 'hang');
+        break;
+      }
+      if (!bag) openBag(t);
+      if (bag.until <= t + 1e-9) { closeBag(t, 'hang'); continue; }
+      const dt = Math.min(bag.left / s.rate, bag.until - t, s.t1 - t);
+      bag.left -= s.rate * dt; used += s.rate * dt; t += dt;
+      if (tiny(bag.left)) { bag.left = 0; closeBag(t, 'empty'); }
+      else if (t >= bag.until - 1e-9) closeBag(t, 'hang');
+      if (bags > 5000) return { ok: false, missing: ['ค่าที่ใส่ทำให้ต้องใช้ถุงมากผิดปกติ ตรวจตัวเลขอีกครั้ง'] };
+    }
+  }
+  if (bag) { // still hanging when the order ends
+    const next = project(bag, H);
+    schedule.push({ carry: !!bag.carry, no: bag.no, start: bag.start, end: H, used: bag.size - bag.left, left: bag.left,
+      endsBy: 'orderEnd', hung: bag.before + (H - bag.start), projEnd: next.at, projBy: next.by, projLeft: next.left });
+    bag = null;
   }
 
   const last = schedule[schedule.length - 1];
-  const open = last && last.endsBy === 'orderEnd';
-  const totalVolume = rate * H;
-  const drugInfused = totalVolume * conc;
+  const open = !!last && last.endsBy === 'orderEnd';
+  const carryRow = carry ? schedule.find(r => r.carry) : null;
+  const loadSep = loading && loading.mode === 'separate' ? loading.drug : 0;
+  const containersIfReuse = bags ? ceilSafe(bags * contPerBagExact) : 0;
+  const containers = p.multiDose ? containersIfReuse : bags * contPerBag;
+  const loadContainers = loading && loading.mode === 'separate' ? loading.containers : 0;
+  const totalIfReuse = (bags || loadSep) ? ceilSafe((bags * mixDrug + loadSep) / A) : 0;
+  const totalContainers = p.multiDose ? totalIfReuse : containers + loadContainers;
+  const emptyHours = bagVolume / rate;
+  const hangLimited = isPos(p.maxHang) && p.maxHang < emptyHours - 1e-9;
+  const drugInfused = used * conc + loadSep;
   return {
-    ok: true, mixDrug, contPerBagExact, contPerBag, drugVolume, bagVolume, conc, rate,
-    emptyHours, hangLimited, bagHours, discardPerBag: hangLimited ? bagVolume - rate * bagHours : 0,
-    carry, carryHung, carryEmptyHours, carryHangLimited, carryHours, bags, containers, containersIfReuse,
-    totalVolume, drugInfused, drugInfusedCont: drugInfused / A, dosePerHour: rate * conc,
+    ok: true, undiluted, mixDrug, contPerBagExact, contPerBag, drugVolume, bagVolume, conc,
+    rate, rate2, dosePerHour: rate * conc, dosePerHour2: rate2 ? rate2 * conc : null,
+    loading, maintStart, step2At,
+    emptyHours, hangLimited, bagHours: hangLimited ? p.maxHang : emptyHours,
+    discardPerBag: hangLimited ? bagVolume - rate * p.maxHang : 0,
+    carry, carryHung, carryEmptyHours: carry ? carry / rate : 0,
+    carryHours: carryRow ? (carryRow.endsBy === 'orderEnd' ? carryRow.projEnd : carryRow.end) : 0,
+    carryHangLimited: carryRow ? (carryRow.endsBy === 'orderEnd' ? carryRow.projBy : carryRow.endsBy) === 'hang' : false,
+    bags, containers, containersIfReuse, loadContainers, totalContainers, totalIfReuse,
+    totalVolume: used, drugInfused, drugInfusedCont: drugInfused / A,
     schedule, leftoverEnd: open ? Math.max(0, last.left) : 0, leftoverHung: open ? last.hung : 0,
   };
 }
 
-/* ---------- reading the drug list sheet ---------- */
-// Splits CSV text into rows of cells (handles quotes, commas and line breaks inside quotes).
-function csvRows(text) {
-  const rows = []; let row = [], cell = '', q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) {
-      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
-      else if (c === '"') q = false;
-      else cell += c;
-    } else if (c === '"') q = true;
-    else if (c === ',') { row.push(cell); cell = ''; }
-    else if (c === '\n' || c === '\r') {
-      if (c === '\r' && text[i + 1] === '\n') i++;
-      row.push(cell); rows.push(row); row = []; cell = '';
-    } else cell += c;
-  }
-  if (cell || row.length) { row.push(cell); rows.push(row); }
-  return rows;
-}
-
+/* ---------- number parsing and formatting ---------- */
 // "25,000" and "1,500.5" = thousands; "0,5" or "2,25" (decimal comma keyboards) = 0.5 and 2.25.
 const parseNum = s => {
   let t = String(s ?? '').trim().replace(/\s+/g, '');
@@ -1300,69 +1246,6 @@ const parseNum = s => {
   return Number.isFinite(n) ? n : null;
 };
 
-const UNIT_ALIASES = {
-  mg: 'mg', 'มก': 'mg', 'มก.': 'mg', 'มิลลิกรัม': 'mg',
-  mcg: 'mcg', 'µg': 'mcg', 'μg': 'mcg', ug: 'mcg', 'ไมโครกรัม': 'mcg',
-  g: 'g', gm: 'g', gram: 'g', 'กรัม': 'g',
-  meq: 'mEq', mmol: 'mmol',
-  unit: 'unit', units: 'unit', u: 'unit', 'ยูนิต': 'unit', iu: 'IU',
-};
-const normUnit = s => { const t = String(s ?? '').trim(); return UNIT_ALIASES[t.toLowerCase()] || t; };
-const normForm = s => {
-  const t = String(s ?? '').trim();
-  if (/^amp|^ampoule|^ampule|^แอมป์/i.test(t)) return 'amp';
-  if (/^vial|^ไวอัล/i.test(t)) return 'vial';
-  return t || 'amp';
-};
-
-const SHEET_COLS = {
-  name: ['ชื่อยา', 'ชื่อ', 'drug', 'name'],
-  amount: ['ยาต่อหลอด', 'ปริมาณยาต่อหลอด', 'ปริมาณต่อหลอด', 'amount', 'strength'],
-  unit: ['หน่วย', 'หน่วยยา', 'unit'],
-  volume: ['mlต่อหลอด', 'ปริมาตรต่อหลอด', 'ปริมาตร', 'volume'],
-  form: ['ชนิดบรรจุ', 'บรรจุ', 'ชนิด', 'form'],
-  mixAmount: ['ผสมยา', 'ปริมาณที่ผสม', 'mix'],
-  mixVolume: ['ผสมในml', 'ผสมใน', 'ปริมาตรผสม'],
-  diluent: ['สารละลาย', 'diluent'],
-  note: ['หมายเหตุ', 'note'],
-};
-
-// gviz CSV text -> { list, skipped }. Rows need a name, a number per container and a unit.
-function parseDrugSheet(text) {
-  if (/^\s*</.test(text)) return { list: [], skipped: 0 }; // an HTML page = the sheet is not shared
-  const rows = csvRows(text);
-  if (!rows.length) return { list: [], skipped: 0 };
-  const head = rows[0].map(h => String(h).replace(/\s+/g, '').toLowerCase());
-  const used = new Set(); const idx = {};
-  for (const [key, aliases] of Object.entries(SHEET_COLS)) {
-    let i = head.findIndex((h, j) => !used.has(j) && aliases.includes(h));
-    if (i < 0) i = head.findIndex((h, j) => !used.has(j) && h && aliases.some(a => h.startsWith(a)));
-    idx[key] = i;
-    if (i >= 0) used.add(i);
-  }
-  if (idx.name < 0 || idx.amount < 0) return { list: [], skipped: 0 };
-  const get = (r, k) => (idx[k] >= 0 ? String(r[idx[k]] ?? '').trim() : '');
-  const list = []; let skipped = 0;
-  for (const r of rows.slice(1)) {
-    const name = get(r, 'name');
-    if (!name) continue;
-    const amount = parseNum(get(r, 'amount'));
-    const unit = normUnit(get(r, 'unit'));
-    if (!isPos(amount) || !unit) { skipped++; continue; }
-    const volume = parseNum(get(r, 'volume'));
-    const mixAmount = parseNum(get(r, 'mixAmount'));
-    const mixVolume = parseNum(get(r, 'mixVolume'));
-    list.push({
-      name, amount, unit, volume: isPos(volume) ? volume : null, form: normForm(get(r, 'form')),
-      mixAmount: isPos(mixAmount) ? mixAmount : null, mixVolume: isPos(mixVolume) ? mixVolume : null,
-      diluent: get(r, 'diluent'), note: get(r, 'note'),
-    });
-  }
-  list.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) || a.amount - b.amount);
-  return { list, skipped };
-}
-
-/* ---------- number and time formatting ---------- */
 function fmt(x) {
   if (!Number.isFinite(x)) return '-';
   const a = Math.abs(x);
@@ -1391,24 +1274,36 @@ function bestMass(value, unit) {
   return { v: mg, u: 'mg' };
 }
 
-function concText(conc, unit) {
+// prefer: the order unit for this drug (e.g. 'mU/min' makes oxytocin read in milliunits).
+function concText(conc, unit, prefer) {
   if (isMass(unit)) { const b = bestMass(conc, unit); return { v: fmt(b.v), u: b.u + '/ml' }; }
+  if (isUnitFam(unit) && String(prefer || '').startsWith('mU')) return { v: fmt(convertAmount(conc, unit, 'mU')), u: 'mU/ml' };
   return { v: fmt(conc), u: unit + '/ml' };
 }
 
-// "480 mcg/hr (8 mcg/min, 0.133 mcg/kg/min)" for mass drugs, "1,000 unit/hr (16.7 unit/kg/hr)" otherwise.
-function doseText(perHour, unit, weight) {
+// "480 mcg/hr (8 mcg/min, 0.133 mcg/kg/min)" for mass drugs; "1,000 unit/hr (16.67 unit/kg/hr)" for units.
+// prefer (the unit the order is written in) decides the per-minute and per-kg units, so "0.5 mg/min" is not shown as 500 mcg/min.
+function doseText(perHour, unit, weight, prefer) {
+  const pf = parseDoseUnit(prefer || '');
   if (isMass(unit)) {
     const h = bestMass(perHour, unit);
-    const m = bestMass(perHour / 60, unit);
+    const minUnit = pf.perMin && !pf.perKg && isMass(pf.num) ? pf.num : bestMass(perHour / 60, unit).u;
     let kg = '';
     if (isPos(weight)) {
-      const mcgKgMin = convertAmount(perHour, unit, 'mcg') / 60 / weight;
-      kg = mcgKgMin >= 1000 ? `, ${fmt(mcgKgMin / 1000)} mg/kg/min` : `, ${fmt(mcgKgMin)} mcg/kg/min`;
+      if (pf.perKg && isMass(pf.num)) {
+        kg = `, ${fmt(convertAmount(perHour, unit, pf.num) / weight / (pf.perMin ? 60 : 1))} ${prefer}`;
+      } else {
+        const mcgKgMin = convertAmount(perHour, unit, 'mcg') / 60 / weight;
+        kg = mcgKgMin >= 1000 ? `, ${fmt(mcgKgMin / 1000)} mg/kg/min` : `, ${fmt(mcgKgMin)} mcg/kg/min`;
+      }
     }
-    return `${fmt(h.v)} ${h.u}/hr (${fmt(m.v)} ${m.u}/min${kg})`;
+    return `${fmt(h.v)} ${h.u}/hr (${fmt(convertAmount(perHour / 60, unit, minUnit))} ${minUnit}/min${kg})`;
   }
-  return `${fmt(perHour)} ${unit}/hr${isPos(weight) ? ` (${fmt(perHour / weight)} ${unit}/kg/hr)` : ''}`;
+  const extra = [];
+  if (isUnitFam(unit) && pf.num === 'mU') extra.push(`${fmt(convertAmount(perHour, unit, 'mU') / 60)} mU/min`);
+  else if (pf.perMin) extra.push(`${fmt(perHour / 60)} ${unit}/min`);
+  if (isPos(weight)) extra.push(`${fmt(perHour / weight)} ${unit}/kg/hr`);
+  return `${fmt(perHour)} ${unit}/hr${extra.length ? ` (${extra.join(', ')})` : ''}`;
 }
 
 /* ---------- dates (Thai months, Buddhist year) ---------- */
@@ -1418,7 +1313,6 @@ const pad = n => String(n).padStart(2, '0');
 const addHours = (d, h) => new Date(d.getTime() + Math.round(h * 60) * 60000);
 const fmtClock = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const fmtDay = d => `${d.getDate()} ${TH_MON[d.getMonth()]}`;
-const fmtDayYear = d => `${fmtDay(d)} ${d.getFullYear() + 543}`;
 const fmtDateLong = d => `วันที่ ${d.getDate()} ${TH_MON_FULL[d.getMonth()]} ${d.getFullYear() + 543} เวลา ${fmtClock(d)} น.`;
 const fmtRel = h => { const m = Math.round(h * 60); return `ชม.ที่ ${Math.floor(m / 60)}:${pad(m % 60)}`; };
 
@@ -1426,194 +1320,435 @@ const fmtRel = h => { const m = Math.round(h * 60); return `ชม.ที่ ${M
 // Plain text for the shared medical record read by every profession:
 // same layout as the ATB Calculator note, one fact per line, ASCII and Thai only
 // (no symbols that older Thai hospital systems turn into "?"), no space-aligned columns.
-// o: { name, form, diluent, start }
+// o: { name, form, diluent (label), start (Date or null), orderUnit }
 function buildNoteText(p, r, o) {
   const unit = p.pkgUnit, form = o.form || 'amp', H = fmt(p.hours);
   const A = '    - ', B = '        - ';
+  const word = r.undiluted ? 'ไซริงจ์' : 'ถุง';
+  const prefer = p.rateMode === 'dose' ? p.doseUnit : o.orderUnit;
   const at = h => (o.start ? `${fmtDay(addHours(o.start, h))} ${fmtClock(addHours(o.start, h))} น.` : fmtRel(h));
   const pkg = `${fmt(p.pkgAmount)} ${unit}/${isPos(p.pkgVolume) ? fmt(p.pkgVolume) + ' ml' : form}`;
-  const mix = `${fmt(r.mixDrug)} ${unit}${p.mixUnit === 'cont' ? ` (${fmt(p.mixAmount)} ${form})` : ''}`
-    + ` in ${o.diluent ? o.diluent + ' ' : ''}${fmt(p.mixVolume)} ml`
-    + (p.includeDrugVolume && r.drugVolume ? ` (รวม ${fmt(r.bagVolume)} ml)` : '');
-  const rate = p.rateMode === 'dose'
-    ? `${fmt(p.doseValue)} ${p.doseUnit}${parseDoseUnit(p.doseUnit).perKg ? ` (BW ${fmt(p.weight)} kg)` : ''} = ${fmt(r.rate)} ml/hr`
-    : `${fmt(r.rate)} ml/hr`;
-  const c = concText(r.conc, unit);
+  const dil = o.diluent ? o.diluent + ' ' : '';
+  const mix = r.undiluted
+    ? `${fmt(r.mixDrug)} ${unit} (${fmt(r.contPerBagExact)} ${form}) ไม่เจือจาง ${fmt(r.bagVolume)} ml`
+    : `${fmt(r.mixDrug)} ${unit}${p.mixUnit === 'cont' ? ` (${fmt(p.mixAmount)} ${form})` : ''} in ${dil}${fmt(p.mixVolume)} ml`
+      + (p.includeDrugVolume && r.drugVolume ? ` (รวม ${fmt(r.bagVolume)} ml)` : '');
+  const rateText = (v, mlhr) => (p.rateMode === 'dose'
+    ? `${fmt(v)} ${p.doseUnit}${parseDoseUnit(p.doseUnit).perKg ? ` (BW ${fmt(p.weight)} kg)` : ''} = ${fmt(mlhr)} ml/hr`
+    : `${fmt(mlhr)} ml/hr`);
+  const rate1 = rateText(p.rateMode === 'dose' ? p.doseValue : p.rate, r.rate);
+  const c = concText(r.conc, unit, prefer);
   const partial = Math.abs(r.contPerBagExact - Math.round(r.contPerBagExact)) > 1e-6;
+  const special = !!(r.loading || p.step2On);
 
   const L = ['Pharmacist note'];
-  L.push(`${A}${o.name || 'ยา'} (${pkg}) ${mix} IV drip ${rate}`);
-  L.push(`${B}ความเข้มข้น ${c.v} ${c.u}, ได้รับยา ${doseText(r.dosePerHour, unit, p.weight)}`);
-  L.push(`${B}1 ถุงหยดได้ ${fmtDuration(r.emptyHours)}${r.hangLimited ? `, เปลี่ยนถุงทุก ${fmtDuration(r.bagHours)}` : ''}`);
+  if (!special) {
+    L.push(`${A}${o.name || 'ยา'} (${pkg}) ${mix} IV drip ${rate1}`);
+  } else {
+    L.push(`${A}${o.name || 'ยา'} (${pkg})`);
+    if (r.loading) L.push(`${B}${loadingText(p, r, o)}`);
+    L.push(`${B}${r.loading ? 'ต่อด้วย ' : ''}${mix} IV drip ${rate1}`);
+    if (p.step2On) L.push(`${B}หลังเริ่มหยด ${fmt(p.step2After)} ชม. เปลี่ยนเป็น ${rateText(p.step2Value, r.rate2)}`);
+  }
+  L.push(`${B}ความเข้มข้น ${c.v} ${c.u}, ได้รับยา ${doseText(r.dosePerHour, unit, p.weight, prefer)}`);
+  L.push(`${B}1 ${word}หยดได้ ${fmtDuration(r.emptyHours)}${p.step2On ? ' (อัตราแรก)' : ''}${r.hangLimited ? `, เปลี่ยน${word}ทุก ${fmtDuration(r.bagHours)}` : ''}`);
   if (o.start) L.push(`${A}เริ่มให้ยา ${fmtDateLong(o.start)}`);
-  if (r.carry) L.push(`${A}ถุงเดิมเหลือ ${fmt(r.carry)} ml ${r.carryHangLimited ? 'เปลี่ยนถุง' : 'หมด'} ${at(r.carryHours)}`);
-  if (r.bags) {
-    const per = p.multiDose ? `ถุงละ ${fmt(r.contPerBagExact)} ${form} ใช้ยาส่วนเหลือต่อ`
-      : partial ? `ถุงละ ${fmt(r.contPerBagExact)} ${form} เปิด ${r.contPerBag} ${form}`
-      : `ถุงละ ${r.contPerBag} ${form}`;
-    L.push(`${A}เตรียมยา${r.carry ? 'เพิ่ม' : ''} ${H} ชม. ${r.bags} ถุง (${per}) รวม ${r.containers} ${form}`);
+  const carryRow = r.schedule.find(b => b.carry);
+  if (carryRow) L.push(`${A}${word}เดิมเหลือ ${fmt(r.carry)} ml ${r.carryHangLimited ? `เปลี่ยน${word}` : 'หมด'} ${at(r.carryHours)}`);
+  if (r.bags || r.loadContainers) {
+    const per = p.multiDose ? `${word}ละ ${fmt(r.contPerBagExact)} ${form} ใช้ยาส่วนเหลือต่อ`
+      : partial ? `${word}ละ ${fmt(r.contPerBagExact)} ${form} เปิด ${r.contPerBag} ${form}`
+      : `${word}ละ ${r.contPerBag} ${form}`;
+    if (r.loading && r.loading.mode === 'separate') {
+      const lc = p.multiDose ? fmt(r.loading.containersExact) : String(r.loadContainers);
+      L.push(`${A}เตรียมยา${r.carry ? 'เพิ่ม' : ''} ${H} ชม. รวม ${r.totalContainers} ${form} (loading ${lc} ${form}, หยดต่อเนื่อง ${r.bags} ${word} ${per})`);
+    } else {
+      L.push(`${A}เตรียมยา${r.carry ? 'เพิ่ม' : ''} ${H} ชม. ${r.bags} ${word} (${per}) รวม ${r.totalContainers} ${form}`);
+    }
     for (const b of r.schedule) {
       if (b.carry) continue;
-      L.push(`${B}ถุงที่ ${b.no} เริ่ม ${at(b.start)} ${r.hangLimited ? 'เปลี่ยน' : 'หมด'} ${at(b.start + r.bagHours)}`
-        + (r.hangLimited ? ` (เหลือทิ้ง ${fmt(r.discardPerBag)} ml)` : ''));
+      const change = b.projBy === 'hang';
+      L.push(`${B}${word}ที่ ${b.no} เริ่ม ${at(b.start)} ${change ? 'เปลี่ยน' : 'หมด'} ${at(b.projEnd)}`
+        + (change ? ` (เหลือทิ้ง ${fmt(Math.max(0, b.projLeft))} ml)` : ''));
     }
   } else {
     L.push(`${A}ไม่ต้องเตรียมยาเพิ่มใน ${H} ชม.`);
   }
   L.push(`${A}ครบ ${H} ชม.${o.start ? ` (${at(p.hours)})` : ''}`);
-  L.push(`${B}ได้รับยารวม ${fmt(r.drugInfused)} ${unit} (${fmt(r.totalVolume)} ml)`);
+  const sep = r.loading && r.loading.mode === 'separate';
+  L.push(`${B}ได้รับยารวม ${fmt(r.drugInfused)} ${unit} (${sep ? `loading ${fmt(r.loading.drug)} ${unit}, หยดต่อเนื่อง ` : ''}${fmt(r.totalVolume)} ml)`);
   if (r.leftoverEnd > 0) {
     const last = r.schedule[r.schedule.length - 1];
-    L.push(`${B}${last.carry ? 'ถุงเดิม' : 'ถุงที่ ' + last.no} ยังเหลือ ${fmt(r.leftoverEnd)} ml`);
+    L.push(`${B}${last.carry ? `${word}เดิม` : `${word}ที่ ${last.no}`} ยังเหลือ ${fmt(r.leftoverEnd)} ml`);
   }
   return L.join('\n');
 }
+
+function loadingText(p, r, o) {
+  const l = r.loading, unit = p.pkgUnit, form = o.form || 'amp';
+  const lu = p.loadUnit || unit;
+  const amount = `${fmt(convertAmount(l.drug, unit, lu))} ${lu}` + (p.loadPerKg ? ` (${fmt(p.loadAmount)} ${lu}/kg, BW ${fmt(p.weight)} kg)` : '');
+  if (l.mode === 'same') {
+    return `Loading ${amount} จาก${r.undiluted ? 'ไซริงจ์' : 'ถุง'}เดียวกัน ${fmt(l.volume)} ml `
+      + (l.hours > 0 ? `ใน ${fmtDuration(l.hours)} (${fmt(l.rate)} ml/hr)` : 'IV push');
+  }
+  const how = l.diluentVolume > 0 ? `in ${o.diluent ? o.diluent + ' ' : ''}${fmt(l.volume)} ml` : 'ไม่เจือจาง';
+  const time = l.hours > 0 ? `IV drip ${fmtDuration(l.hours)}${l.rate ? ` (${fmt(l.rate)} ml/hr)` : ''}` : 'IV bolus';
+  const use = p.multiDose ? `ใช้ยา ${fmt(l.containersExact)} ${form}` : `ใช้ ${l.containers} ${form}`;
+  return `Loading ${amount} ${how} ${time} ${use}`;
+}
 // CALC-END
 
-/* ========================= UI ========================= */
+/* =====================================================================
+   UI
+   ===================================================================== */
 const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage blocked: the page still works */ } },
-};
-
-const PKG_UNITS = ['mg', 'mcg', 'g', 'mEq', 'mmol', 'unit', 'IU'];
-const CACHE_KEY = 'drip-calc-druglist-' + (SHEET_ID || 'starter');
 const num = id => parseNum($(id).value);
+const PKG_UNITS = ['mg', 'mcg', 'g', 'mEq', 'mmol', 'unit', 'IU'];
 
-let drugList = [];
-let listInfo = { source: 'starter', time: null, skipped: 0 };
-let rateMode = 'mlhr';
+const state = {
+  drug: null,        // a DRUGS entry, or null
+  custom: false,     // "อื่นๆ": every field typed by hand
+  edited: false,     // package of a listed drug changed by hand
+  diluent: null,     // key of DILUENTS, or 'other'
+  rateMode: 'mlhr',
+  loadMode: 'separate',
+  mixIndex: -1,      // preset chosen, -1 = typed
+};
 let lastHero = '';
+let currentNote = '';
 
-/* ---------- drug list ---------- */
-const drugKey = d => [d.name, d.amount, d.unit, d.volume].join('|');
-const drugLabel = d => `${d.name} ${fmt(d.amount)} ${d.unit}${d.volume ? '/' + fmt(d.volume) + ' ml' : ''} (${d.form})`;
+const drugPkgText = d => `${fmt(d.amount)} ${d.unit}/${fmt(d.volume)} ml`;
+const hay = d => `${d.name} ${d.alias || ''} ${drugPkgText(d)}`.toLowerCase();
+const isUnverified = keys => (keys || []).some(k => SOURCES[k] && SOURCES[k].unverified);
 
-// Key of the drug chosen in the menu; read it before drugList is replaced.
-function selectedDrugKey() {
-  const v = $('#drugSelect').value;
-  return v && v !== 'custom' && drugList[+v] ? drugKey(drugList[+v]) : null;
+function srcHtml(keys) {
+  if (!keys || !keys.length) return '';
+  return keys.map(k => {
+    const s = SOURCES[k];
+    if (!s) return '';
+    if (s.unverified) return `<span class="u">${esc(s.t)} (ยังไม่ยืนยัน)</span>`;
+    return s.u ? `<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.t)}</a>` : esc(s.t);
+  }).filter(Boolean).join(', ');
 }
 
-function renderDrugOptions(keepKey) {
-  const sel = $('#drugSelect');
-  const wasCustom = sel.value === 'custom';
-  sel.innerHTML = '<option value="">เลือกยา...</option>'
-    + drugList.map((d, i) => `<option value="${i}">${esc(drugLabel(d))}</option>`).join('')
-    + '<option value="custom">กรอกเอง (ไม่มีในรายการ)</option>';
-  if (keepKey) {
-    // The same item may sit at another position (or be gone) after a reload.
-    const i = drugList.findIndex(d => drugKey(d) === keepKey);
-    sel.value = i >= 0 ? String(i) : 'custom';
-  } else if (wasCustom) sel.value = 'custom';
+/* ---------- drug search ---------- */
+let comboItems = [];
+let comboActive = -1;
+
+function searchDrugs(q) {
+  const toks = q.toLowerCase().split(/\s+/).filter(Boolean);
+  return DRUGS.filter(d => toks.every(t => hay(d).includes(t)));
 }
 
-function setListStatus(state) {
-  const dot = $('#listDot'), el = $('#listStatus'), n = drugList.length;
-  const skipped = listInfo.skipped ? ` ข้ามแถวที่กรอกไม่ครบ ${listInfo.skipped} แถว` : '';
-  dot.className = 'dot';
-  if (state === 'loading') { dot.classList.add('load'); el.textContent = 'กำลังโหลดรายการยาจาก Google Sheet'; return; }
-  if (state === 'sheet') {
-    dot.classList.add('ok');
-    el.textContent = `รายการยาจาก Google Sheet ${n} รายการ (อัปเดต ${fmtClock(listInfo.time)})${skipped}`;
-    return;
-  }
-  if (!SHEET_ID) { el.textContent = `รายการตั้งต้น ${n} รายการ`; return; }
-  dot.classList.add('warn');
-  el.textContent = listInfo.source === 'cache'
-    ? `โหลดชีตไม่ได้ ใช้รายการที่จำไว้ในเครื่อง ${n} รายการ${listInfo.time ? ' (ของ ' + fmtDay(listInfo.time) + ' ' + fmtClock(listInfo.time) + ')' : ''}`
-    : `โหลดชีตไม่ได้ ใช้รายการตั้งต้น ${n} รายการ`;
+function renderCombo() {
+  const q = $('#drugSearch').value.trim();
+  const list = $('#drugList');
+  const found = searchDrugs(q);
+  comboItems = [...found.map(d => ({ type: 'drug', d })), { type: 'other', q }];
+  if (comboActive >= comboItems.length) comboActive = comboItems.length - 1;
+  list.innerHTML = (found.length ? '' : '<li class="combo-empty">ไม่พบในรายการ ใช้ "อื่นๆ" กรอกเองได้</li>')
+    + comboItems.map((it, i) => {
+      const sel = i === comboActive ? 'true' : 'false';
+      if (it.type === 'other') {
+        return `<li class="combo-item other" role="option" id="opt-${i}" data-i="${i}" aria-selected="${sel}">อื่นๆ (กรอกเอง)${it.q ? `: ${esc(it.q)}` : ''}</li>`;
+      }
+      return `<li class="combo-item" role="option" id="opt-${i}" data-i="${i}" aria-selected="${sel}">`
+        + `<span class="ci-name">${esc(it.d.name)}</span><span class="ci-pkg">${esc(drugPkgText(it.d))} ${esc(it.d.form)}</span></li>`;
+    }).join('');
+  $('#drugSearch').setAttribute('aria-activedescendant', comboActive >= 0 ? `opt-${comboActive}` : '');
 }
 
-function loadCachedList() {
-  try {
-    const c = JSON.parse(store.get(CACHE_KEY) || 'null');
-    if (c && Array.isArray(c.list) && c.list.length) return c;
-  } catch { /* ignore a corrupt cache */ }
-  return null;
+function openCombo() {
+  $('#drugList').hidden = false;
+  $('#drugSearch').setAttribute('aria-expanded', 'true');
+  renderCombo();
 }
 
-async function refreshList() {
-  if (!SHEET_ID) { setListStatus('starter'); return; }
-  setListStatus('loading');
-  try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(SHEET_TAB)}`;
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const { list, skipped } = parseDrugSheet(await res.text());
-    if (!list.length) throw new Error('empty sheet');
-    const keep = selectedDrugKey();
-    drugList = list;
-    listInfo = { source: 'sheet', time: new Date(), skipped };
-    store.set(CACHE_KEY, JSON.stringify({ time: listInfo.time.toISOString(), list }));
-    renderDrugOptions(keep);
-    setListStatus('sheet');
-  } catch (e) {
-    setListStatus('fail');
-  }
+function closeCombo() {
+  $('#drugList').hidden = true;
+  $('#drugSearch').setAttribute('aria-expanded', 'false');
+  comboActive = -1;
 }
 
-function setPkgUnit(u) {
-  const sel = $('#pkgUnit');
-  if (u && ![...sel.options].some(o => o.value === u)) sel.add(new Option(u, u));
-  sel.value = u || 'mg';
+function pickItem(i) {
+  const it = comboItems[i];
+  if (!it) return;
+  closeCombo();
+  if (it.type === 'other') chooseCustom(it.q);
+  else chooseDrug(it.d);
+  recalc();
 }
 
-function setPkgForm(f) {
-  const sel = $('#pkgForm');
-  if (f && ![...sel.options].some(o => o.value === f)) sel.add(new Option(f, f));
-  sel.value = f || 'amp';
+/* ---------- applying a drug ---------- */
+function setSelect(sel, value, options) {
+  if (options) sel.innerHTML = options.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+  if (value && ![...sel.options].some(o => o.value === value)) sel.add(new Option(value, value));
+  sel.value = value;
 }
 
-function applyDrug(d) {
+function chooseDrug(d) {
+  state.drug = d; state.custom = false; state.edited = false; state.mixIndex = -1;
+  $('#drugSearch').value = `${d.name} ${drugPkgText(d)}`;
+  $('#drugClear').hidden = false;
   $('#drugName').value = d.name;
   $('#pkgAmount').value = d.amount;
-  setPkgUnit(d.unit);
-  $('#pkgVolume').value = d.volume ?? '';
-  setPkgForm(d.form);
-  if (d.mixAmount && d.mixVolume) {
-    $('#mixAmount').value = d.mixAmount;
-    $('#mixVolume').value = d.mixVolume;
-  } else {
-    $('#mixAmount').value = '';
-    $('#mixVolume').value = '';
-  }
+  setSelect($('#pkgUnit'), d.unit);
+  $('#pkgVolume').value = d.volume;
+  setSelect($('#pkgForm'), d.form);
+  $('#pkgFields').hidden = true;
+  ['#mixAmount', '#mixVolume'].forEach(id => { $(id).value = ''; });
   $('#mixUnit').value = 'drug';
-  $('#diluent').value = d.diluent || '';
-  const note = $('#drugNote');
-  note.hidden = !d.note;
-  note.textContent = d.note ? 'หมายเหตุ: ' + d.note : '';
-  syncUnits();
+  $('#includeDrugVol').checked = false;
+  $('#multiDose').checked = !!d.multiDose;
+  state.diluent = (d.diluents && d.diluents[0]) || null;
+  // loading defaults are filled in but left off: the order decides
+  $('#loadOn').checked = false;
+  $('#step2On').checked = false;
+  if (d.loading) fillLoading(d.loading);
+  else clearLoading();
+  syncUnits(d.orderUnit);
+  renderDrugCard(); renderDiluents(); renderMixes(); renderSpecial();
 }
 
-function clearDrugFields() {
-  ['#drugName', '#pkgAmount', '#pkgVolume', '#mixAmount', '#mixVolume', '#diluent'].forEach(id => { $(id).value = ''; });
-  setPkgUnit('mg'); setPkgForm('amp'); $('#mixUnit').value = 'drug';
-  $('#drugNote').hidden = true;
+function chooseCustom(name) {
+  state.drug = null; state.custom = true; state.edited = false; state.mixIndex = -1;
+  $('#drugSearch').value = name ? `อื่นๆ: ${name}` : 'อื่นๆ (กรอกเอง)';
+  $('#drugClear').hidden = false;
+  $('#drugName').value = name || '';
+  ['#pkgAmount', '#pkgVolume', '#mixAmount', '#mixVolume'].forEach(id => { $(id).value = ''; });
+  setSelect($('#pkgUnit'), 'mg'); setSelect($('#pkgForm'), 'amp');
+  $('#mixUnit').value = 'drug';
+  $('#includeDrugVol').checked = false;
+  $('#multiDose').checked = false;
+  $('#pkgFields').hidden = false;
+  state.diluent = 'NSS';
+  $('#loadOn').checked = false; $('#step2On').checked = false;
+  clearLoading();
   syncUnits();
+  renderDrugCard(); renderDiluents(); renderMixes(); renderSpecial();
+  setTimeout(() => (name ? $('#pkgAmount') : $('#drugName')).focus(), 0);
 }
 
-// Keeps unit labels in step with the package (mix unit menu, dose units).
-function syncUnits() {
+function clearDrug() {
+  state.drug = null; state.custom = false; state.edited = false; state.mixIndex = -1; state.diluent = null;
+  $('#drugSearch').value = '';
+  $('#drugClear').hidden = true;
+  ['#drugName', '#pkgAmount', '#pkgVolume', '#mixAmount', '#mixVolume', '#dilOther'].forEach(id => { $(id).value = ''; });
+  setSelect($('#pkgUnit'), 'mg'); setSelect($('#pkgForm'), 'amp');
+  $('#mixUnit').value = 'drug';
+  $('#pkgFields').hidden = true;
+  $('#loadOn').checked = false; $('#step2On').checked = false;
+  clearLoading();
+  syncUnits();
+  renderDrugCard(); renderDiluents(); renderMixes(); renderSpecial();
+}
+
+function fillLoading(l) {
+  $('#loadAmount').value = l.amount;
+  syncLoadUnits(l.unit);
+  $('#loadPerKg').checked = !!l.perKg;
+  setLoadMode(l.mode || 'separate');
+  $('#loadVolume').value = l.mode === 'same' ? '' : (l.volume ?? '');
+  $('#loadMinutes').value = l.minutes ?? '';
+}
+
+function clearLoading() {
+  ['#loadAmount', '#loadVolume', '#loadMinutes', '#step2After', '#step2Value'].forEach(id => { $(id).value = ''; });
+  $('#loadPerKg').checked = false;
+  setLoadMode('separate');
+  syncLoadUnits();
+}
+
+function renderDrugCard() {
+  const card = $('#drugCard'), d = state.drug;
+  if (!d) { card.hidden = true; renderNotes(); return; }
+  card.hidden = false;
+  $('#dcName').textContent = d.name;
+  const pkgNow = `${fmt(num('#pkgAmount'))} ${$('#pkgUnit').value}/${fmt(num('#pkgVolume'))} ml (${$('#pkgForm').value})`;
+  $('#dcPkg').textContent = pkgNow;
+  const unverified = isUnverified(d.pkgSrc);
+  $('#dcBadge').innerHTML = state.edited ? '<span class="badge edit">แก้ขนาดบรรจุเอง</span>'
+    : unverified ? '<span class="badge warn">บางค่ายังไม่ยืนยัน</span>' : '<span class="badge ok">ขนาดบรรจุมีที่มา</span>';
+  $('#dcSrc').innerHTML = `ขนาดบรรจุ: ${srcHtml(d.pkgSrc)}`;
+  $('#btnEditPkg').textContent = $('#pkgFields').hidden ? 'แก้ขนาดบรรจุ' : 'ซ่อนช่องแก้ขนาดบรรจุ';
+  renderNotes();
+}
+
+function renderNotes() {
+  const d = state.drug;
+  const items = d ? (d.notes || []) : [];
+  $('#drugNotes').innerHTML = items.map(n => `<li>${esc(n.t)}${n.src && n.src.length ? ` <span class="src">(${srcHtml(n.src)})</span>` : ''}</li>`).join('');
+}
+
+/* ---------- diluent ---------- */
+function diluentChoices() {
+  if (state.drug && state.drug.diluents) return state.drug.diluents;
+  return ALL_DILUENTS; // listed drug without checked data, or a drug typed by hand
+}
+
+function renderDiluents() {
+  const box = $('#dilChips');
+  if (!state.drug && !state.custom) {
+    box.innerHTML = '<span class="hint">เลือกยาก่อน จะแสดงเฉพาะสารน้ำที่ผสมได้</span>';
+    $('#dilNote').textContent = ''; $('#dilOther').hidden = true;
+    return;
+  }
+  const keys = diluentChoices();
+  const withOther = state.custom || !state.drug.diluents;
+  if (!keys.includes(state.diluent) && !(withOther && state.diluent === 'other')) state.diluent = keys[0];
+  box.innerHTML = keys.map(k => `<button type="button" class="opt-chip" role="radio" data-dil="${k}" aria-checked="${state.diluent === k}">`
+    + `<span class="oc-main">${esc(DILUENTS[k].label)}</span><span class="oc-sub">${esc(DILUENTS[k].sub)}</span></button>`).join('')
+    + (withOther ? `<button type="button" class="opt-chip" role="radio" data-dil="other" aria-checked="${state.diluent === 'other'}"><span class="oc-main">อื่นๆ</span><span class="oc-sub">ระบุเอง</span></button>` : '');
+  $('#dilOther').hidden = state.diluent !== 'other';
+  const d = state.drug;
+  let note = '';
+  if (d) {
+    if (d.dilNote) note = d.dilNote;
+    if (d.dilSrc && d.dilSrc.length) note += `${note ? ' ' : ''}(${srcHtml(d.dilSrc)})`;
+    if (!d.diluents) note = `<span class="hint warn">${note}</span>`;
+  } else if (state.custom) {
+    note = 'ยาที่กรอกเองแสดงสารน้ำทุกชนิด ตรวจความเข้ากันได้กับแนวทางของ รพ.';
+  }
+  $('#dilNote').innerHTML = note;
+  syncUndiluted();
+}
+
+function diluentLabel() {
+  if (state.diluent === 'other') return $('#dilOther').value.trim();
+  if (!state.diluent || state.diluent === 'none') return '';
+  return DILUENTS[state.diluent].label;
+}
+
+function syncUndiluted() {
+  const und = state.diluent === 'none';
+  $('#mixColon').hidden = und;
+  $('#mixVolumeWrap').hidden = und;
+  $('#mixRow').classList.toggle('single', und);
+  $('#mixLabel').textContent = und ? 'ยาต่อ 1 ไซริงจ์ (ไม่เจือจาง)' : 'สูตรผสม (ยา : สารละลาย)';
+}
+
+/* ---------- mix presets ---------- */
+function mixLabel(m, d) {
+  const unitTxt = m.unit === 'cont' ? d.form : d.unit;
+  if (m.v === 0) return { main: `${fmt(m.a)} ${unitTxt}`, sub: `${fmt(m.a * d.volume)} ml ไม่เจือจาง` };
+  const drug = m.unit === 'cont' ? m.a * d.amount : m.a;
+  const vol = m.v + (m.addDrugVol ? drug / d.amount * d.volume : 0);
+  const c = concText(drug / vol, d.unit, d.orderUnit);
+  return { main: `${m.label ? m.label + ' ' : ''}${fmt(m.a)} ${unitTxt} : ${fmt(m.v)} ml${m.addDrugVol ? ' + ยา' : ''}`, sub: `${c.v} ${c.u}` };
+}
+
+function renderMixes() {
+  const box = $('#mixChips'), d = state.drug;
+  if (!d || state.edited || !d.mixes || !d.mixes.length) { box.innerHTML = ''; box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = d.mixes.map((m, i) => {
+    const l = mixLabel(m, d);
+    const unv = isUnverified(m.src);
+    return `<button type="button" class="opt-chip" data-mix="${i}" aria-pressed="${state.mixIndex === i}" title="${esc((m.src || []).map(k => SOURCES[k] ? SOURCES[k].t : '').join(', '))}">`
+      + `<span class="oc-main">${esc(l.main)}${unv ? ' <span class="u-dot" aria-label="ยังไม่ยืนยัน"></span>' : ''}</span><span class="oc-sub">${esc(l.sub)}</span></button>`;
+  }).join('');
+}
+
+function applyMix(i) {
+  const d = state.drug, m = d && d.mixes[i];
+  if (!m) return;
+  state.mixIndex = i;
+  if (m.v === 0 && d.diluents && d.diluents.includes('none')) state.diluent = 'none';
+  $('#mixAmount').value = m.a;
+  $('#mixUnit').value = m.unit === 'cont' ? 'cont' : 'drug';
+  $('#mixVolume').value = m.v === 0 ? '' : m.v;
+  $('#includeDrugVol').checked = !!m.addDrugVol;
+  renderDiluents(); renderMixes();
+}
+
+// After typing in the mix fields, light up the preset that matches (if any).
+function matchMix() {
+  const d = state.drug;
+  if (!d || state.edited) { state.mixIndex = -1; return; }
+  const a = num('#mixAmount'), v = num('#mixVolume'), u = $('#mixUnit').value, und = state.diluent === 'none';
+  state.mixIndex = d.mixes.findIndex(m => m.a === a && (m.unit === 'cont' ? 'cont' : 'drug') === u
+    && (und ? m.v === 0 : m.v === v) && !!m.addDrugVol === $('#includeDrugVol').checked);
+}
+
+/* ---------- special section ---------- */
+function renderSpecial() {
+  const d = state.drug;
+  const hasPreset = !!(d && d.loading);
+  $('#specialBox').classList.toggle('has-preset', hasPreset);
+  $('#btnRegimen').hidden = !(d && d.regimen);
+  let hint = '';
+  if (d && d.loading) {
+    const l = d.loading;
+    const how = l.mode === 'same' ? 'จากถุงเดียวกัน' : l.minutes > 0 ? `ใน ${l.minutes} นาที` : 'IV bolus';
+    hint = `ยานี้มีสูตร loading ${fmt(l.amount)} ${l.unit}${l.perKg ? '/kg' : ''} ${how} (${srcHtml(l.src)}) ใส่ค่าไว้แล้ว ติ๊ก "มี loading dose" ถ้า order มี`;
+    if (l.note) hint += ` ${esc(l.note)}`;
+  } else if (d) hint = 'ยานี้ไม่มีสูตร loading ในแหล่งที่ตรวจ ถ้า order มี ติ๊กแล้วกรอกเองได้';
+  else hint = 'ใช้กับยาที่มี loading dose หรือ order ที่เปลี่ยนอัตรากลางทาง เช่น Amiodarone';
+  if (d && d.regimen) hint += ` กดปุ่ม "ใส่สูตรตามแหล่งอ้างอิง" เพื่อใส่ทั้ง loading และการลดอัตรา (${srcHtml(d.regimen.src)})`;
+  $('#specialHint').innerHTML = hint;
+  $('#loadFields').hidden = !$('#loadOn').checked;
+  $('#step2Fields').hidden = !$('#step2On').checked;
+  $('#loadVolRow').hidden = state.loadMode === 'same';
+  $('#step2Unit').textContent = state.rateMode === 'dose' ? $('#doseUnit').value : 'ml/hr';
+}
+
+function setLoadMode(mode) {
+  state.loadMode = mode;
+  $$('[data-lmode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lmode === mode)));
+  $('#loadVolRow').hidden = mode === 'same';
+}
+
+function applyRegimen() {
+  const d = state.drug, g = d && d.regimen;
+  if (!g) return;
+  if (!isPos(num('#mixAmount'))) applyMix(g.mix || 0);
+  $('#loadOn').checked = true;
+  fillLoading(d.loading);
+  setRateMode('dose');
+  setSelect($('#doseUnit'), g.doseUnit);
+  $('#doseValue').value = g.doseValue;
+  $('#step2On').checked = true;
+  $('#step2After').value = g.step2After;
+  $('#step2Value').value = g.step2Value;
+  $('#hours').value = g.hours;
+  renderSpecial();
+}
+
+/* ---------- units ---------- */
+function syncUnits(preferDose) {
   const unit = $('#pkgUnit').value, form = $('#pkgForm').value;
   const mix = $('#mixUnit');
   mix.options[0].textContent = unit;
   mix.options[1].textContent = form;
   const ds = $('#doseUnit'), prev = ds.value, units = doseUnitsFor(unit);
   ds.innerHTML = units.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('');
-  ds.value = units.includes(prev) ? prev : units[0];
+  ds.value = preferDose && units.includes(preferDose) ? preferDose : units.includes(prev) ? prev : units[0];
+  syncLoadUnits();
 }
 
-/* ---------- inputs ---------- */
+function syncLoadUnits(prefer) {
+  const unit = $('#pkgUnit').value, sel = $('#loadUnit'), prev = sel.value;
+  const units = familyUnits(unit);
+  sel.innerHTML = units.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('');
+  sel.value = prefer && units.includes(prefer) ? prefer : units.includes(prev) ? prev : unit;
+}
+
+/* ---------- read the form ---------- */
 function readParams() {
   return {
     pkgAmount: num('#pkgAmount'), pkgUnit: $('#pkgUnit').value, pkgVolume: num('#pkgVolume'),
+    diluent: state.diluent,
     mixAmount: num('#mixAmount'), mixUnit: $('#mixUnit').value, mixVolume: num('#mixVolume'),
-    rateMode, rate: num('#rate'), doseValue: num('#doseValue'), doseUnit: $('#doseUnit').value, weight: num('#weight'),
+    includeDrugVolume: $('#includeDrugVol').checked,
+    rateMode: state.rateMode, rate: num('#rate'), doseValue: num('#doseValue'), doseUnit: $('#doseUnit').value, weight: num('#weight'),
+    step2On: $('#step2On').checked, step2After: num('#step2After'), step2Value: num('#step2Value'),
+    loadOn: $('#loadOn').checked, loadAmount: num('#loadAmount'), loadUnit: $('#loadUnit').value, loadPerKg: $('#loadPerKg').checked,
+    loadMode: state.loadMode, loadVolume: num('#loadVolume'), loadMinutes: num('#loadMinutes'),
     hours: num('#hours'), carryVolume: num('#carryVolume'), carryHung: num('#carryHung'), maxHang: num('#maxHang'),
-    includeDrugVolume: $('#includeDrugVol').checked, multiDose: $('#multiDose').checked,
+    multiDose: $('#multiDose').checked,
   };
 }
 
@@ -1632,15 +1767,15 @@ function setStartNow() {
 }
 
 function setRateMode(mode) {
-  rateMode = mode;
-  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+  state.rateMode = mode;
+  $$('.seg button[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
   $('#rateMlhr').hidden = mode !== 'mlhr';
   $('#rateDose').hidden = mode !== 'dose';
 }
 
 function syncChips() {
   const h = num('#hours');
-  document.querySelectorAll('#hourChips .chip').forEach(c => c.setAttribute('aria-pressed', String(+c.dataset.h === h)));
+  $$('#hourChips .chip').forEach(c => c.setAttribute('aria-pressed', String(+c.dataset.h === h)));
 }
 
 function syncAdvancedBadge(p) {
@@ -1654,6 +1789,10 @@ function syncAdvancedBadge(p) {
 const ICON_WARN = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
 const ICON_INFO = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
 
+function drugName() {
+  return state.drug ? state.drug.name : $('#drugName').value.trim();
+}
+
 function packageText(p, name) {
   return `${name || 'ยา'} ${fmt(p.pkgAmount)} ${p.pkgUnit}${isPos(p.pkgVolume) ? '/' + fmt(p.pkgVolume) + ' ml' : ''}`;
 }
@@ -1661,11 +1800,15 @@ function packageText(p, name) {
 function recalc() {
   const p = readParams();
   const form = $('#pkgForm').value, unit = p.pkgUnit;
-  const name = $('#drugName').value.trim();
+  const name = drugName();
+  const und = state.diluent === 'none';
+  const word = und ? 'ไซริงจ์' : 'ถุง';
   syncChips();
   syncAdvancedBadge(p);
   $('#carryHungGroup').hidden = !(isPos(p.carryVolume) && isPos(p.maxHang));
   $('#headerDrug').textContent = name ? packageText(p, name) : 'นับจำนวน amp ยาหยดต่อ 1 order';
+  if (state.drug) renderDrugCard();
+  renderSpecial();
 
   // Hint under the mix row.
   const hint = $('#mixHint');
@@ -1674,12 +1817,19 @@ function recalc() {
     const per = mixDrug / p.pkgAmount;
     const vol = isPos(p.pkgVolume) ? ` ดูดยา ${fmt(per * p.pkgVolume)} ml` : '';
     hint.innerHTML = p.mixUnit === 'cont'
-      ? `= ยา <b>${fmt(mixDrug)} ${esc(unit)}</b> ต่อถุง${vol}`
-      : `= <b>${fmt(per)} ${esc(form)}</b> ต่อถุง${vol}`;
-  } else hint.textContent = '';
+      ? `= ยา <b>${fmt(mixDrug)} ${esc(unit)}</b> ต่อ${word}${vol}`
+      : `= <b>${fmt(per)} ${esc(form)}</b> ต่อ${word}${vol}`;
+  } else hint.textContent = state.drug && state.drug.mixes.length ? 'เลือกสูตรผสมด้านบน หรือกรอกเอง' : '';
 
   const r = computeDrip(p);
   $('#rateCalc').innerHTML = r.ok ? `= อัตรา <b>${fmt(r.rate)} ml/hr</b>` : 'กรอกยาต่อหลอด สูตรผสม และขนาดยาให้ครบ จะแปลงเป็น ml/hr ให้';
+  $('#step2Hint').innerHTML = r.ok && p.step2On ? `= <b>${fmt(r.rate2)} ml/hr</b> เริ่ม${fmtRel(r.step2At).replace('ชม.ที่', ' ชม.ที่')}` : '';
+  if (r.ok && r.loading) {
+    const l = r.loading;
+    $('#loadHint').innerHTML = l.mode === 'same'
+      ? `= ${fmt(l.drug)} ${esc(unit)} คือ <b>${fmt(l.volume)} ml</b> จาก${word}เดียวกัน${l.hours > 0 ? ` อัตรา <b>${fmt(l.rate)} ml/hr</b>` : ' ให้ครั้งเดียว'}`
+      : `= ${fmt(l.drug)} ${esc(unit)} ใช้ <b>${p.multiDose ? fmt(l.containersExact) : l.containers} ${esc(form)}</b>${l.rate ? ` อัตรา <b>${fmt(l.rate)} ml/hr</b>` : l.hours > 0 ? '' : ' (IV bolus)'}`;
+  } else $('#loadHint').textContent = '';
 
   if (!r.ok) {
     $('#resultMain').hidden = true;
@@ -1687,7 +1837,7 @@ function recalc() {
     $('#scheduleCard').hidden = true;
     const empty = $('#resultEmpty');
     empty.hidden = false;
-    empty.innerHTML = `<b>ยังคำนวณไม่ได้</b>ยังขาด: ${r.missing.map(esc).join(', ')}`;
+    empty.innerHTML = `<b>ยังคำนวณไม่ได้</b>${state.drug || state.custom ? '' : 'เริ่มจากค้นหายาด้านบน<br>'}ยังขาด: ${r.missing.map(esc).join(', ')}`;
     lastHero = '';
     return;
   }
@@ -1696,16 +1846,19 @@ function recalc() {
   $('#resultMain').hidden = false;
 
   // Hero
-  const heroKey = `${r.containers}|${form}|${r.bags}`;
+  const heroKey = `${r.totalContainers}|${form}|${r.bags}`;
   $('#heroLabel').textContent = `ต้องใช้ใน ${fmt(p.hours)} ชม.`;
-  $('#heroCount').textContent = r.containers;
+  $('#heroCount').textContent = r.totalContainers;
   $('#heroForm').textContent = form;
   $('#heroDrug').textContent = packageText(p, name);
   let sub;
-  if (!r.bags) sub = 'ถุงที่แขวนอยู่พอถึงครบเวลา ไม่ต้องผสมเพิ่ม';
-  else if (p.multiDose) sub = `ผสม ${r.bags} ถุง ใช้ยารวม ${fmt(r.bags * r.contPerBagExact)} ${form} (ใช้ส่วนเหลือต่อ)`;
-  else sub = `ผสม ${r.bags} ถุง ถุงละ ${r.contPerBag} ${form}`;
+  if (!r.bags) sub = r.carry ? `${word}ที่แขวนอยู่พอถึงครบเวลา ไม่ต้องผสมเพิ่ม` : 'ไม่มีการหยดต่อเนื่องในช่วงนี้';
+  else if (p.multiDose) sub = `ผสม ${r.bags} ${word} ใช้ยารวม ${fmt(r.bags * r.contPerBagExact)} ${form} (ใช้ส่วนเหลือต่อ)`;
+  else sub = `ผสม ${r.bags} ${word} ${word}ละ ${r.contPerBag} ${form}`;
   $('#heroSub').textContent = sub;
+  $('#heroParts').innerHTML = r.loading && r.loading.mode === 'separate'
+    ? `<span>loading ${p.multiDose ? fmt(r.loading.containersExact) : r.loadContainers} ${esc(form)}</span><span>หยดต่อเนื่อง ${p.multiDose ? fmt(r.bags * r.contPerBagExact) : r.containers} ${esc(form)}</span>`
+    : '';
   if (lastHero && heroKey !== lastHero) {
     const hero = $('#hero');
     hero.classList.remove('flash'); void hero.offsetWidth; hero.classList.add('flash');
@@ -1713,57 +1866,64 @@ function recalc() {
   lastHero = heroKey;
 
   // Stats
-  const c = concText(r.conc, unit);
+  const prefer = p.rateMode === 'dose' ? p.doseUnit : (state.drug && state.drug.orderUnit);
+  const c = concText(r.conc, unit, prefer);
   $('#statConc').textContent = c.v;
   $('#statConcUnit').textContent = c.u;
+  $('#statBagLabel').textContent = `1 ${word}หยดได้`;
   $('#statBagTime').textContent = fmtDuration(r.emptyHours);
-  $('#statBagVol').textContent = `ถุง ${fmt(r.bagVolume)} ml`;
+  $('#statBagVol').textContent = `${word} ${fmt(r.bagVolume)} ml${p.step2On ? ' อัตราแรก' : ''}`;
   $('#statTotalVol').textContent = fmt(r.totalVolume);
   $('#statTotalVolUnit').textContent = `ml ใน ${fmt(p.hours)} ชม.`;
   $('#statInfused').textContent = fmt(r.drugInfused);
   $('#statInfusedUnit').textContent = `${unit} (${fmt(r.drugInfusedCont)} ${form})`;
 
+  // Dose lines
   const ordered = p.rateMode === 'dose'
-    ? `สั่ง ${fmt(p.doseValue)} ${p.doseUnit}${parseDoseUnit(p.doseUnit).perKg ? ` (น้ำหนัก ${fmt(p.weight)} kg)` : ''} เท่ากับ `
-    : '';
-  $('#doseLine').textContent = `${ordered}อัตรา ${fmt(r.rate)} ml/hr ได้ยา ${doseText(r.dosePerHour, unit, p.weight)}`;
+    ? `สั่ง ${fmt(p.doseValue)} ${p.doseUnit}${parseDoseUnit(p.doseUnit).perKg ? ` (น้ำหนัก ${fmt(p.weight)} kg)` : ''} เท่ากับ ` : '';
+  const lines = [];
+  if (r.loading) lines.push(`<div class="dose-line load">${esc(loadingText(p, r, { form, diluent: diluentLabel() }))}</div>`);
+  lines.push(`<div class="dose-line">${esc(`${ordered}อัตรา ${fmt(r.rate)} ml/hr ได้ยา ${doseText(r.dosePerHour, unit, p.weight, prefer)}`)}</div>`);
+  if (p.step2On) lines.push(`<div class="dose-line">${esc(`หลังเริ่มหยด ${fmt(p.step2After)} ชม. อัตรา ${fmt(r.rate2)} ml/hr ได้ยา ${doseText(r.dosePerHour2, unit, p.weight, prefer)}`)}</div>`);
+  $('#doseLines').innerHTML = lines.join('');
 
   // Alerts
   const alerts = [];
   const add = (type, html) => alerts.push(`<li class="alert ${type}">${type === 'warn' ? ICON_WARN : ICON_INFO}<span>${html}</span></li>`);
+  const d = state.drug;
+  if (d && !d.diluents) add('warn', `ยังไม่พบข้อมูลสารน้ำที่ผสมได้ของ ${esc(d.name)} ในแหล่งที่ตรวจ ตรวจกับแนวทางของ รพ.`);
+  if (state.diluent === 'other') add('warn', 'สารน้ำที่ระบุเองไม่ได้ตรวจความเข้ากันได้ ตรวจกับแนวทางของ รพ.');
+  if (d && state.mixIndex >= 0 && isUnverified(d.mixes[state.mixIndex].src)) add('warn', 'สูตรผสมนี้มาจากตารางทั่วไปที่ยังไม่ได้ยืนยันกับเอกสาร ตรวจกับ HAD ของ รพ.');
   const partial = Math.abs(r.contPerBagExact - Math.round(r.contPerBagExact)) > 1e-6;
   if (partial && r.bags) {
-    if (p.multiDose) add('info', `ถุงละใช้ ${fmt(r.contPerBagExact)} ${esc(form)} คิดแบบใช้ยาที่เหลือในหลอดที่เปิดแล้วต่อ`);
-    else add('warn', `ถุงละใช้ ${fmt(r.contPerBagExact)} ${esc(form)} ต้องเปิด ${r.contPerBag} ${esc(form)} ส่วนที่เหลือถุงละ ${fmt(r.contPerBag - r.contPerBagExact)} ${esc(form)} ทิ้ง ถ้าเก็บใช้ต่อได้ (multi-dose vial) จะใช้ ${r.containersIfReuse} ${esc(form)} เปิดได้ที่ตัวเลือกเพิ่มเติม`);
+    if (p.multiDose) add('info', `${word}ละใช้ ${fmt(r.contPerBagExact)} ${esc(form)} คิดแบบใช้ยาที่เหลือในหลอดที่เปิดแล้วต่อ`);
+    else add('warn', `${word}ละใช้ ${fmt(r.contPerBagExact)} ${esc(form)} ต้องเปิด ${r.contPerBag} ${esc(form)} ส่วนที่เหลือ${word}ละ ${fmt(r.contPerBag - r.contPerBagExact)} ${esc(form)} ทิ้ง ถ้าเก็บใช้ต่อได้ (multi-dose vial) จะใช้ ${r.totalIfReuse} ${esc(form)} เปิดได้ที่ตัวเลือกเพิ่มเติม`);
   }
   if (r.carry) {
-    const then = r.bags ? ' แล้วจึงเริ่มถุงใหม่' : ' พอถึงครบเวลา';
-    const hungHint = isPos(p.maxHang) && !r.carryHung ? ' (นับเวลาเปลี่ยนถุงจากเวลาเริ่ม ถ้าถุงเดิมแขวนมาก่อน ใส่ชั่วโมงในช่อง ถุงเดิมแขวนมาแล้ว)' : '';
+    const then = r.bags ? ` แล้วจึงเริ่ม${word}ใหม่` : ' พอถึงครบเวลา';
+    const hungHint = isPos(p.maxHang) && !r.carryHung ? ` (นับเวลาเปลี่ยน${word}จากเวลาเริ่ม ถ้า${word}เดิมแขวนมาก่อน ใส่ชั่วโมงในช่อง ถุงเดิมแขวนมาแล้ว)` : '';
     add('info', r.carryHangLimited
-      ? `ถุงที่แขวนอยู่ ${fmt(r.carry)} ml ต้องเปลี่ยนภายใน ${fmtDuration(r.carryHours)} ตามเวลาเปลี่ยนถุง ทิ้งยาที่เหลือประมาณ ${fmt(r.carry - r.rate * r.carryHours)} ml${then}${hungHint}`
-      : `ถุงที่แขวนอยู่ ${fmt(r.carry)} ml หยดได้อีก ${fmtDuration(r.carryHours)}${then}${hungHint}`);
+      ? `${word}ที่แขวนอยู่ ${fmt(r.carry)} ml ต้องเปลี่ยนภายใน ${fmtDuration(r.carryHours)} ตามเวลาเปลี่ยน${word}${then}${hungHint}`
+      : `${word}ที่แขวนอยู่ ${fmt(r.carry)} ml หยดได้อีก ${fmtDuration(r.carryHours)}${then}${hungHint}`);
   }
-  if (r.hangLimited) {
-    add('info', `เปลี่ยนถุงทุก ${fmtDuration(r.bagHours)} ก่อนยาหมด ทิ้งยาที่เหลือถุงละประมาณ ${fmt(r.discardPerBag)} ml`);
-  } else if (r.emptyHours > 24 && !isPos(p.maxHang)) {
-    add('info', `1 ถุงหยดได้นานกว่า 24 ชม. ตรวจความคงตัวของยาหลังผสม ถ้าต้องเปลี่ยนถุงก่อนหมด ใส่เวลาที่ตัวเลือกเพิ่มเติม`);
-  }
+  if (r.hangLimited) add('info', `เปลี่ยน${word}ทุก ${fmtDuration(r.bagHours)} ก่อนยาหมด ทิ้งยาที่เหลือ${word}ละประมาณ ${fmt(r.discardPerBag)} ml (อัตราแรก)`);
+  else if (r.emptyHours > 24 && !isPos(p.maxHang)) add('info', `1 ${word}หยดได้นานกว่า 24 ชม. ตรวจความคงตัวของยาหลังผสม ถ้าต้องเปลี่ยนก่อนหมด ใส่เวลาที่ตัวเลือกเพิ่มเติม`);
   if (r.leftoverEnd > 0) {
     const hang = isPos(p.maxHang);
-    const runFor = Math.min(r.leftoverEnd / r.rate, hang ? Math.max(0, p.maxHang - r.leftoverHung) : Infinity);
-    add('info', `ครบ ${fmt(p.hours)} ชม. ถุงสุดท้ายยังเหลือ <b>${fmt(r.leftoverEnd)} ml</b> (หยดต่อได้อีก ${fmtDuration(runFor)}${hang ? `, แขวนมาแล้ว ${fmtDuration(r.leftoverHung)}` : ''}) ถ้าคิดรอบถัดไป ใส่ ${fmt(r.leftoverEnd)} ในช่อง ถุงที่แขวนอยู่ยังเหลือ${hang ? ` และ ${fmt(r.leftoverHung)} ในช่อง ถุงเดิมแขวนมาแล้ว` : ''}`);
+    const lastRow = r.schedule[r.schedule.length - 1];
+    const runFor = lastRow.projEnd - p.hours;
+    add('info', `ครบ ${fmt(p.hours)} ชม. ${word}สุดท้ายยังเหลือ <b>${fmt(r.leftoverEnd)} ml</b> (หยดต่อได้อีก ${fmtDuration(runFor)}${hang ? `, แขวนมาแล้ว ${fmtDuration(r.leftoverHung)}` : ''}) ถ้าคิดรอบถัดไป ใส่ ${fmt(r.leftoverEnd)} ในช่อง ถุงที่แขวนอยู่ยังเหลือ${hang ? ` และ ${fmt(r.leftoverHung)} ในช่อง ถุงเดิมแขวนมาแล้ว` : ''}`);
   }
   $('#alerts').innerHTML = alerts.join('');
 
   // Note and schedule
   const start = getStart();
-  renderNote(buildNoteText(p, r, { name, form, diluent: $('#diluent').value.trim(), start }));
+  renderNote(buildNoteText(p, r, { name, form, diluent: diluentLabel(), start, orderUnit: state.drug && state.drug.orderUnit }));
   $('#noteCard').hidden = false;
-  renderSchedule(p, r, form, start);
+  renderSchedule(p, r, form, start, word);
 }
 
 // The copy button sends currentNote exactly; the preview turns leading spaces into hanging indents.
-let currentNote = '';
 function renderNote(text) {
   currentNote = text;
   $('#noteText').innerHTML = text.split('\n').map(line => {
@@ -1771,31 +1931,37 @@ function renderNote(text) {
     const indent = m[1].length, bullet = m[2] ? 2 : 0;
     // Preview only: keep a number on the same line as its unit ("20:00 น.", "6 พ.ย.", "4 mg").
     const body = esc((m[2] || '') + m[3])
-      .replace(/(\d) (?=น\.|[ก-๙]{1,2}\.[ก-๙]{1,2}\.|ml|mg|mcg|g\/|mEq|mmol|unit|IU|amp|vial|ถุง|ชม\.|นาที)/g, '$1 ');
+      .replace(/(\d) (?=น\.|[ก-๙]{1,2}\.[ก-๙]{1,2}\.|ml|mg|mcg|g\/|mEq|mmol|unit|IU|mU|amp|vial|ถุง|ไซริงจ์|ชม\.|นาที)/g, '$1 ');
     return `<div class="nl" style="padding-left:${indent + bullet}ch;text-indent:-${bullet}ch">${body}</div>`;
   }).join('');
 }
 
-function renderSchedule(p, r, form, start) {
+function renderSchedule(p, r, form, start, word) {
   const card = $('#scheduleCard');
-  if (!r.schedule.length) { card.hidden = true; return; }
-  card.hidden = false;
-  const when = h => start
+  const rows = [];
+  const when = h => (start
     ? `<span class="t">${fmtClock(addHours(start, h))}</span><span class="d">${fmtDay(addHours(start, h))}</span>`
-    : `<span class="t">${fmtRel(h)}</span>`;
+    : `<span class="t">${fmtRel(h)}</span>`);
+  if (r.loading) {
+    const l = r.loading;
+    rows.push(`<tr class="load"><td><span class="bag-no">L</span></td><td>${when(0)}</td><td>${l.hours > 0 ? when(l.hours) : '<span class="t">IV push</span>'}<span class="tag load">loading</span></td>`
+      + `<td><span class="t">${fmt(l.volume)} ml</span><span class="d">${l.mode === 'same' ? `จาก${word}เดียวกัน` : `${p.multiDose ? fmt(l.containersExact) : l.containers} ${esc(form)}`}</span></td></tr>`);
+  }
   const perBag = p.multiDose ? `ยา ${fmt(r.mixDrug)} ${esc(p.pkgUnit)}` : `${r.contPerBag} ${esc(form)}`;
-  $('#scheduleBody').innerHTML = r.schedule.map((b, i) => {
+  r.schedule.forEach((b, i) => {
     const last = i === r.schedule.length - 1;
-    const tag = b.endsBy === 'empty' ? '<span class="tag empty">หมดถุง</span>'
-      : b.endsBy === 'hang' ? '<span class="tag hang">ครบเวลาเปลี่ยนถุง</span>'
+    const tag = b.endsBy === 'empty' ? `<span class="tag empty">หมด${word}</span>`
+      : b.endsBy === 'hang' ? `<span class="tag hang">ครบเวลาเปลี่ยน${word}</span>`
       : `<span class="tag end">ครบเวลา เหลือ ${fmt(b.left)} ml</span>`;
-    return `<tr class="${b.carry ? 'carry' : ''}${last ? ' last' : ''}">
+    rows.push(`<tr class="${b.carry ? 'carry' : ''}${last ? ' last' : ''}">
       <td><span class="bag-no">${b.carry ? 'เดิม' : b.no}</span></td>
       <td>${when(b.start)}</td>
       <td>${when(b.end)}${tag}</td>
-      <td><span class="t">${fmt(b.used)} ml</span><span class="d">${b.carry ? 'ถุงที่แขวนอยู่' : perBag}</span></td>
-    </tr>`;
-  }).join('');
+      <td><span class="t">${fmt(b.used)} ml</span><span class="d">${b.carry ? `${word}ที่แขวนอยู่` : perBag}</span></td>
+    </tr>`);
+  });
+  card.hidden = !rows.length;
+  $('#scheduleBody').innerHTML = rows.join('');
 }
 
 /* ---------- actions ---------- */
@@ -1825,15 +1991,9 @@ async function onCopy() {
 }
 
 function runExample(scroll = true) {
-  const i = drugList.findIndex(d => /norepinephrine/i.test(d.name) && d.unit === 'mg' && d.amount === 4);
-  if (i >= 0) {
-    $('#drugSelect').value = String(i);
-    applyDrug(drugList[i]);
-  } else {
-    $('#drugSelect').value = 'custom';
-    applyDrug({ name: 'Norepinephrine', amount: 4, unit: 'mg', volume: 4, form: 'amp' });
-  }
+  chooseDrug(DRUGS.find(d => d.id === 'ne4'));
   $('#mixAmount').value = '8'; $('#mixUnit').value = 'drug'; $('#mixVolume').value = '500';
+  matchMix(); renderMixes();
   setRateMode('mlhr');
   $('#rate').value = '30'; $('#hours').value = '24';
   recalc();
@@ -1841,8 +2001,7 @@ function runExample(scroll = true) {
 }
 
 function resetAll() {
-  $('#drugSelect').value = '';
-  clearDrugFields();
+  clearDrug();
   ['#rate', '#doseValue', '#weight', '#carryVolume', '#carryHung', '#maxHang'].forEach(id => { $(id).value = ''; });
   $('#hours').value = '24';
   $('#includeDrugVol').checked = false;
@@ -1858,62 +2017,73 @@ function init() {
   const pu = $('#pkgUnit');
   PKG_UNITS.forEach(u => pu.add(new Option(u, u)));
   pu.value = 'mg';
-
-  const cached = SHEET_ID ? loadCachedList() : null;
-  if (cached) {
-    drugList = cached.list;
-    listInfo = { source: 'cache', time: cached.time ? new Date(cached.time) : null, skipped: 0 };
-  } else {
-    drugList = STARTER_DRUGS.map(d => ({ volume: null, mixAmount: null, mixVolume: null, diluent: '', note: '', ...d }));
-  }
-  renderDrugOptions();
-  setListStatus(cached ? 'fail' : 'starter');
-
-  if (SHEET_ID) {
-    const link = $('#linkSheet');
-    link.href = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
-    link.hidden = false;
-  }
-
   syncUnits();
   setStartNow();
+  renderDiluents();
+  renderSpecial();
 
-  $('#drugSelect').addEventListener('change', e => {
-    const v = e.target.value;
-    if (v === 'custom') { clearDrugFields(); e.target.value = 'custom'; $('#drugName').focus(); }
-    else if (v === '') clearDrugFields();
-    else applyDrug(drugList[+v]);
-    recalc();
+  const search = $('#drugSearch');
+  search.addEventListener('focus', () => { search.select(); openCombo(); });
+  search.addEventListener('input', () => { comboActive = 0; openCombo(); });
+  search.addEventListener('keydown', e => {
+    if ($('#drugList').hidden && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { openCombo(); e.preventDefault(); return; }
+    if (e.key === 'ArrowDown') { comboActive = Math.min(comboItems.length - 1, comboActive + 1); renderCombo(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { comboActive = Math.max(0, comboActive - 1); renderCombo(); e.preventDefault(); }
+    else if (e.key === 'Enter') { if (!$('#drugList').hidden) { pickItem(comboActive >= 0 ? comboActive : 0); e.preventDefault(); } }
+    else if (e.key === 'Escape') closeCombo();
   });
+  search.addEventListener('blur', () => setTimeout(closeCombo, 150));
+  $('#drugList').addEventListener('pointerdown', e => {
+    const li = e.target.closest('[data-i]');
+    if (li) { e.preventDefault(); pickItem(+li.dataset.i); search.blur(); }
+  });
+  $('#drugClear').addEventListener('click', () => { clearDrug(); recalc(); search.focus(); });
 
-  // Editing a package field by hand turns the menu into "custom" so it never shows the wrong item.
+  $('#btnEditPkg').addEventListener('click', () => { $('#pkgFields').hidden = !$('#pkgFields').hidden; renderDrugCard(); });
   ['#drugName', '#pkgAmount', '#pkgVolume'].forEach(id => $(id).addEventListener('input', () => {
-    const sel = $('#drugSelect');
-    if (sel.value !== '' && sel.value !== 'custom') sel.value = 'custom';
+    if (state.drug) { state.edited = true; state.mixIndex = -1; renderMixes(); }
     recalc();
   }));
   ['#pkgUnit', '#pkgForm'].forEach(id => $(id).addEventListener('change', () => {
-    const sel = $('#drugSelect');
-    if (sel.value !== '' && sel.value !== 'custom') sel.value = 'custom';
+    if (state.drug) { state.edited = true; state.mixIndex = -1; renderMixes(); }
     syncUnits(); recalc();
   }));
 
-  ['#mixAmount', '#mixVolume', '#rate', '#doseValue', '#weight', '#hours', '#carryVolume', '#carryHung', '#maxHang', '#diluent']
+  $('#dilChips').addEventListener('click', e => {
+    const b = e.target.closest('[data-dil]');
+    if (!b) return;
+    state.diluent = b.dataset.dil;
+    renderDiluents(); matchMix(); renderMixes(); recalc();
+    if (state.diluent === 'other') $('#dilOther').focus();
+  });
+  $('#dilOther').addEventListener('input', recalc);
+
+  $('#mixChips').addEventListener('click', e => {
+    const b = e.target.closest('[data-mix]');
+    if (!b) return;
+    applyMix(+b.dataset.mix); recalc();
+  });
+  ['#mixAmount', '#mixVolume'].forEach(id => $(id).addEventListener('input', () => { matchMix(); renderMixes(); recalc(); }));
+  $('#mixUnit').addEventListener('change', () => { matchMix(); renderMixes(); recalc(); });
+  $('#includeDrugVol').addEventListener('change', () => { matchMix(); renderMixes(); recalc(); });
+
+  ['#rate', '#doseValue', '#weight', '#hours', '#carryVolume', '#carryHung', '#maxHang',
+    '#loadAmount', '#loadVolume', '#loadMinutes', '#step2After', '#step2Value']
     .forEach(id => $(id).addEventListener('input', recalc));
-  ['#mixUnit', '#doseUnit', '#includeDrugVol', '#multiDose', '#startDate', '#startTime']
+  ['#doseUnit', '#multiDose', '#startDate', '#startTime', '#loadUnit', '#loadPerKg', '#loadOn', '#step2On']
     .forEach(id => $(id).addEventListener('change', recalc));
 
-  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => { setRateMode(b.dataset.mode); recalc(); }));
-  document.querySelectorAll('#hourChips .chip').forEach(c => c.addEventListener('click', () => { $('#hours').value = c.dataset.h; recalc(); }));
+  $$('.seg button[data-mode]').forEach(b => b.addEventListener('click', () => { setRateMode(b.dataset.mode); recalc(); }));
+  $$('[data-lmode]').forEach(b => b.addEventListener('click', () => { setLoadMode(b.dataset.lmode); recalc(); }));
+  $$('#hourChips .chip').forEach(c => c.addEventListener('click', () => { $('#hours').value = c.dataset.h; recalc(); }));
 
+  $('#btnRegimen').addEventListener('click', () => { applyRegimen(); recalc(); });
   $('#btnExample').addEventListener('click', () => runExample());
   $('#btnReset').addEventListener('click', resetAll);
   $('#btnCopy').addEventListener('click', onCopy);
-  $('#btnReload').addEventListener('click', refreshList);
 
   recalc();
   if (new URLSearchParams(location.search).has('example')) runExample(false);
-  refreshList();
 }
 
 document.addEventListener('DOMContentLoaded', init);
