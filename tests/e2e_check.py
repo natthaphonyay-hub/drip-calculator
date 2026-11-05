@@ -9,6 +9,7 @@ from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from reference import reference  # noqa: E402
+from limits_ref import limits_reference  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SAFE = re.compile(r"^[\t\n\x20-\x7E฀-๿]*$")
@@ -46,6 +47,8 @@ def main():
     raw = subprocess.run(["node", os.path.join(HERE, "e2e-ui.mjs")], capture_output=True, text=True, check=True).stdout
     drugs = {d["id"]: d for d in json.loads(subprocess.run(["node", os.path.join(HERE, "run-engine.mjs"), "--drugs"],
                                                           capture_output=True, text=True, check=True).stdout)}
+    lim = json.loads(subprocess.run(["node", os.path.join(HERE, "run-engine.mjs"), "--limits-data"],
+                                    capture_output=True, text=True, check=True).stdout)
     data = json.loads(raw)
     cases, bad, seen = data["cases"], [], Counter()
     for c in cases:
@@ -59,16 +62,32 @@ def main():
             continue
         ref = reference(c["params"])
         seen[c.get("mode", "custom")] += 1
-        if c["drug"] != "custom":
+        if c["drug"] != "custom" and c.get("mode") != "limits":
             wrong = intended(c, drugs)
             if wrong:
                 bad.append(("form does not hold what was clicked: " + ", ".join(wrong), c))
                 continue
         if not ref["ok"]:
-            if c["hero"] is not None:
+            if c.get("mode") == "limits":
+                bad.append(("a warning case must be computable", c))
+            elif c["hero"] is not None:
                 bad.append(("app shows a result the model refuses", c))
             continue
-        if c["hero"] != ref["totalContainers"]:
+        # dose and rate warnings on screen = the independent model (rules that hit a rounding tie are left out)
+        exp, ties = limits_reference(c["params"], lim["LIMITS"].get(c["drug"])) if c["drug"] != "custom" else ([], set())
+        shown_w = sorted(tuple(x) for x in c["limits"] if x[0] not in ties)
+        want_w = sorted((i, s, lv) for i, s, _, lv in exp if i not in ties)
+        seen["warnings shown"] += len(shown_w)
+        if c.get("mode") == "limits":
+            seen["warning cases computed"] += 1
+        want_note = c["drug"] == "custom" or c["drug"] in lim["LIMITS_NOTE"] or bool(exp)
+        if shown_w != want_w:
+            bad.append((f"warnings {shown_w} != model {want_w}", c))
+        elif bool(c["limitsNote"]) != want_note:
+            bad.append(("note under the warnings", c))
+        elif any(re.search(r"NaN|undefined|Infinity|null|\$\{", t) for t in c["limitText"]):
+            bad.append(("warning text", c))
+        elif c["hero"] != ref["totalContainers"]:
             bad.append((f"hero {c['hero']} != model {ref['totalContainers']}", c))
         elif not SAFE.match(c["note"]) or re.search(r"NaN|undefined|Infinity|null", c["note"]):
             bad.append(("note text", c))

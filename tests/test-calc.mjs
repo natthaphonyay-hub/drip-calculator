@@ -11,7 +11,8 @@ const block = (a, b) => html.slice(html.indexOf(a), html.indexOf(b));
 const code = block('// DATA-START', '// DATA-END') + '\n' + block('// CALC-START', '// CALC-END');
 const api = new Function(`${code}
 return { computeDrip, parseNum, fmt, fmtDuration, concText, doseText, ceilSafe, buildNoteText,
-  convertAmount, doseUnitsFor, familyUnits, dosePerHour, DRUGS, SOURCES, DILUENTS, ALL_DILUENTS };`)();
+  convertAmount, doseUnitsFor, familyUnits, dosePerHour, DRUGS, SOURCES, DILUENTS, ALL_DILUENTS,
+  checkLimits, rateIn, concIn, LIMITS, LIMITS_NOTE };`)();
 
 let pass = 0, fail = 0;
 function test(name, fn) {
@@ -428,6 +429,135 @@ test('Pharmacist note with loading and a rate change (Amiodarone)', () => {
     '        - ได้รับยารวม 1,045 mg (loading 150 mg, หยดต่อเนื่อง 497.2 ml)',
     '        - ถุงที่ 1 ยังเหลือ 2.78 ml',
   ].join('\n'));
+});
+
+
+/* ---------- dose and rate warnings ---------- */
+const KINDS = ['dose', 'rate', 'load', 'loadMin', 'conc', 'day', 'hours'];
+const drugById = id => api.DRUGS.find(d => d.id === id);
+// A plain order for a drug: first preset mix in its first diluent, no loading, 24 hours.
+function baseOrder(d, over = {}) {
+  const m = d.mixes[0];
+  const und = m.v === 0;
+  return { pkgAmount: d.amount, pkgUnit: d.unit, pkgVolume: d.volume, diluent: und ? 'none' : (d.diluents || ['NSS'])[0],
+    mixAmount: m.a, mixUnit: m.unit === 'cont' ? 'cont' : 'drug', mixVolume: m.v, includeDrugVolume: !!m.addDrugVol,
+    rateMode: 'mlhr', rate: 10, hours: 24, multiDose: !!d.multiDose, ...over };
+}
+const limitsOf = (d, p) => api.checkLimits(api.LIMITS[d.id], p, api.computeDrip(p));
+// Package units per hour that give `v` in a rate unit such as mcg/kg/min or unit/24hr.
+function perHourFor(v, unit, pkgUnit, w) {
+  const parts = unit.split('/');
+  let x = api.convertAmount(v, parts[0], pkgUnit);
+  if (parts.includes('kg')) x *= w;
+  const per = parts[parts.length - 1];
+  return per === 'min' ? x * 60 : per === '24hr' ? x / 24 : x;
+}
+// An order whose value for rule L is exactly `v` (the other numbers stay ordinary).
+function orderAt(d, L, v) {
+  const w = (L.perKg || L.unit.split('/').includes('kg')) ? 60 : undefined;
+  const base = baseOrder(d, { weight: w });
+  const r0 = api.computeDrip(base);
+  if (L.kind === 'dose' || L.kind === 'rate') return { ...base, rate: perHourFor(v, L.unit, d.unit, w) / r0.conc };
+  if (L.kind === 'conc') {
+    const [num, per] = L.unit.split('/');
+    const perMl = api.convertAmount(v, num, d.unit) / (per === 'L' ? 1000 : 1);
+    return { ...base, diluent: 'NSS', mixUnit: 'drug', includeDrugVolume: false, mixVolume: 100, mixAmount: perMl * 100 };
+  }
+  if (L.kind === 'day') return { ...base, rate: api.convertAmount(v, L.unit, d.unit) / 24 / r0.conc };
+  if (L.kind === 'hours') return { ...base, hours: v };
+  const load = { loadOn: true, loadMode: 'separate', loadVolume: 100, loadUnit: d.unit, loadPerKg: false, loadAmount: d.amount, loadMinutes: 30 };
+  if (L.kind === 'load') return { ...base, ...load, loadUnit: L.unit, loadPerKg: !!L.perKg, loadAmount: v };
+  return { ...base, ...load, loadMinutes: v }; // loadMin
+}
+const hit = (d, L, v) => limitsOf(d, orderAt(d, L, v)).filter(a => a.id === L.id && a.seg !== 'step2');
+
+test('Limits table: known drugs, kinds, units that fit the package, sources, and low < high < max', () => {
+  const ids = new Set(api.DRUGS.map(d => d.id));
+  for (const [id, rules] of Object.entries(api.LIMITS)) {
+    const d = drugById(id);
+    assert.ok(d, 'unknown drug ' + id);
+    const seen = new Set();
+    for (const L of rules) {
+      assert.ok(!seen.has(L.id), id + ' duplicate rule ' + L.id); seen.add(L.id);
+      assert.ok(KINDS.includes(L.kind), id + ' kind ' + L.kind);
+      assert.ok(L.src && L.src.length && L.src.every(k => k in api.SOURCES && !api.SOURCES[k].unverified), id + ' ' + L.id + ' sources');
+      const nums = [L.low, L.high, L.max].filter(x => x != null);
+      assert.ok(nums.length && nums.every(x => x > 0), id + ' ' + L.id + ' numbers');
+      for (let i = 1; i < nums.length; i++) assert.ok(nums[i] > nums[i - 1], id + ' ' + L.id + ' order');
+      let probe;
+      if (L.kind === 'dose' || L.kind === 'rate') probe = api.rateIn(1, d.unit, L.unit, 60);
+      else if (L.kind === 'conc') probe = api.concIn(1, d.unit, L.unit);
+      else if (L.kind === 'load' || L.kind === 'day') probe = api.convertAmount(1, d.unit, L.unit);
+      else probe = 1;
+      assert.ok(Number.isFinite(probe), id + ' ' + L.id + ' unit ' + L.unit + ' does not fit ' + d.unit);
+      assert.ok(!(L.noWeight && (L.perKg || L.unit.includes('/kg'))), id + ' ' + L.id + ' noWeight on a per-kg rule');
+      assert.ok(!L.perKg || L.kind === 'load', id + ' ' + L.id + ' perKg is for loading only');
+      for (const k of ['lowLevel', 'highLevel']) assert.ok(!L[k] || ['info', 'warn'].includes(L[k]), id + ' ' + k);
+    }
+  }
+  for (const id of ids) assert.ok(id in api.LIMITS || id in api.LIMITS_NOTE, id + ' has neither rules nor a note');
+  for (const id of Object.keys(api.LIMITS_NOTE)) assert.ok(ids.has(id), 'note for unknown drug ' + id);
+});
+
+test('Limits: every threshold is silent exactly at the limit and fires just past it, for every rule of every drug', () => {
+  let checked = 0;
+  for (const [id, rules] of Object.entries(api.LIMITS)) {
+    const d = drugById(id);
+    for (const L of rules) {
+      const edges = [];
+      if (L.max != null) edges.push(['max', L.max, 1.05, 'danger']);
+      if (L.high != null) edges.push(['high', L.high, 1.05, L.highLevel || 'warn']);
+      if (L.low != null) edges.push(['low', L.low, 0.95, L.lowLevel || 'info']);
+      for (const [side, edge, f, level] of edges) {
+        // exactly at a limit: that limit stays silent (a lower limit of the same rule may still speak)
+        assert.deepEqual(hit(d, L, edge).filter(a => a.side === side), [], `${id} ${L.id} at ${side} ${edge} should be silent`);
+        if (side === 'low') assert.deepEqual(hit(d, L, edge), [], `${id} ${L.id} at low ${edge} should be fully silent`);
+        const past = hit(d, L, edge * f);
+        assert.deepEqual(past.map(a => `${a.side}:${a.level}`), [`${side}:${level}`], `${id} ${L.id} past ${side} ${edge}`);
+        checked += 2;
+      }
+    }
+  }
+  assert.ok(checked >= 80, 'checked ' + checked);
+});
+
+test('Limits: a value that only looks equal is not flagged (dopamine 50.004 mcg/kg/min)', () => {
+  const d = drugById('dopa'), L = api.LIMITS.dopa[0];
+  assert.deepEqual(hit(d, L, 50.004), []);
+  assert.deepEqual(hit(d, L, 50.5).map(a => a.level), ['danger']);
+});
+
+test('Limits: per-kg rules need a weight; NE falls back to the 30 mcg/min table and asks for the weight', () => {
+  const d = drugById('ne4');
+  const p = baseOrder(d, { rateMode: 'dose', doseUnit: 'mcg/min', doseValue: 40 });
+  assert.deepEqual(limitsOf(d, p).map(a => `${a.id}:${a.level}`), ['dose:warn', 'weight:info']);
+  assert.deepEqual(limitsOf(d, { ...p, weight: 60 }).map(a => a.id), []); // 0.67 mcg/kg/min is inside 0.01 to 1
+  assert.deepEqual(limitsOf(d, { ...p, weight: 10 }).map(a => `${a.id}:${a.level}`), ['dose-kg:danger']); // 4 mcg/kg/min
+});
+
+test('Limits: the rate change and the loading are checked on their own', () => {
+  const d = drugById('amio');
+  const p = baseOrder(d, { rateMode: 'dose', doseUnit: 'mg/min', doseValue: 1, step2On: true, step2After: 6, step2Value: 2,
+    loadOn: true, loadAmount: 150, loadUnit: 'mg', loadMode: 'separate', loadVolume: 100, loadMinutes: 4 });
+  const got = limitsOf(d, p).map(a => `${a.id}:${a.seg}:${a.level}`);
+  // 150 mg in 4 min = 37.5 mg/min; 2 mg/min after 6 hr; that plan gives about 2,660 mg in the first 24 hr
+  assert.deepEqual(got, ['rate:load:danger', 'dose:step2:warn', 'day:day:warn']);
+});
+
+test('Limits: a loading with no time cannot be speed-checked and says so (calcium gluconate)', () => {
+  const d = drugById('cagl');
+  const p = baseOrder(d, { weight: 60, loadOn: true, loadAmount: 1, loadUnit: 'g', loadMode: 'separate', loadVolume: 0, loadMinutes: 0 });
+  const got = limitsOf(d, p).filter(a => a.id === 'rate');
+  assert.equal(got.length, 1);
+  assert.equal(got[0].value, null);
+  assert.equal(got[0].level, 'info');
+});
+
+test('Drug over the first 24 hours follows the plan: amiodarone label regimen = 150 + 360 + 535 mg', () => {
+  const r = api.computeDrip(AMIO);
+  near(r.drugFirst24, 150 + 360 + (24 - 10 / 60 - 6) * 30, 1e-6);
+  const same = api.computeDrip({ ...NE, loadOn: true, loadAmount: 1, loadUnit: 'mg', loadMode: 'same', loadMinutes: 0 });
+  near(same.drugFirst24, 1 + 0.016 * 30 * 24, 1e-9); // the push from the bag counts once
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

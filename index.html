@@ -430,6 +430,12 @@
   .alert svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 3px; }
   .alert.warn { background: #fffbeb; border-color: #fde68a; color: #78350f; }
   .alert.info { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
+  /* dose and rate warnings sit above the amp count, so they are read before the result */
+  .alert.danger { background: #fef2f2; border-color: #fca5a5; color: #7f1d1d; border-width: 2px; }
+  .limit-alerts:not(:empty) { margin-bottom: 12px; }
+  .limit-alerts .alert a { color: inherit; }
+  .alert .lim-sub { display: block; font-size: 12.5px; margin-top: 4px; }
+  .limits-note { font-size: 12.5px; color: var(--text-2); margin: -4px 2px 12px; }
 
   /* ---------- Note ---------- */
   .note-card .card-header { background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-bottom: 2px solid #c7d2fe; }
@@ -656,7 +662,7 @@
           <div class="hint" id="rateCalc" style="margin-top:8px"></div>
         </div>
         <div class="form-group">
-          <label class="form-label" for="weight">น้ำหนักผู้ป่วย (kg) <span class="opt">ใส่เมื่อสั่งเป็นต่อ kg</span></label>
+          <label class="form-label" for="weight">น้ำหนักผู้ป่วย (kg) <span class="opt">ใส่เมื่อสั่งเป็นต่อ kg และใช้ตรวจช่วงขนาดยา</span></label>
           <input id="weight" class="form-input" type="text" inputmode="decimal" placeholder="ไม่บังคับ" autocomplete="off">
         </div>
       </div>
@@ -783,6 +789,8 @@
     <div class="card-body">
       <div class="result-empty" id="resultEmpty"></div>
       <div id="resultMain" class="card-body" style="padding:0" hidden>
+        <ul class="alerts limit-alerts" id="limitAlerts" aria-live="polite"></ul>
+        <p class="limits-note" id="limitsNote" hidden></p>
         <div class="hero" id="hero">
           <div class="hero-label" id="heroLabel">ต้องใช้ใน 24 ชม.</div>
           <div class="hero-value"><span id="heroCount">0</span><small id="heroForm">amp</small></div>
@@ -860,7 +868,7 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.3 | November 2026</div>
+        <div class="footer-info-version">Version 1.4 | November 2026</div>
       </div>
     </div>
     <div class="footer-divider">
@@ -906,6 +914,7 @@ const SOURCES = {
   dm_prop: { t: 'ฉลาก Propofol', u: DM('3acf8e6c-827d-11e2-9e96-0800200c9a66') },
   dm_dex: { t: 'ฉลาก Precedex', u: DM('4419162d-81d4-49bd-96de-1729440bdb74') },
   dm_oxy: { t: 'ฉลาก Pitocin', u: DM('6e5a66fc-e507-497c-b5ce-44a8c95898ad') },
+  dm_bicarb: { t: 'ฉลาก Sodium bicarbonate', u: DM('3737e5e5-2296-4a3d-b8f1-dfea1eff1927') },
 };
 
 const DILUENTS = {
@@ -1031,6 +1040,104 @@ const DRUGS = [
     orderUnit: 'mU/min',
     notes: [{ t: 'เริ่ม 0.5 ถึง 1 mU/min เพิ่มทีละ 1 ถึง 2 mU/min ทุก 30 ถึง 60 นาที เกิน 9 ถึง 10 mU/min แทบไม่จำเป็น', src: ['dm_oxy'] }] },
 ];
+
+/* Dose and rate warnings. Every number comes from the label or Thai HAD document named in src (read 5 Nov 2026);
+   a drug with no source has no rule. Research note: 0 Inbox/🐘-คำตอบผู้เชี่ยวชาญ/2026-11-05-เกณฑ์เตือนขนาดยาหยด-Drip-Calculator.md
+   kind: dose = the drip dose at each rate step (not the loading) | rate = any infusion speed, the loading included
+         load = loading amount | loadMin = loading time in minutes | conc = drug concentration in the bag or syringe
+         day = drug given over the first 24 hours if the plan runs on | hours = length of the order
+   low -> info (or lowLevel), high -> warn (or highLevel), max -> danger.
+   A per-kg rule needs a body weight; noWeight: true = use the rule only when no weight is given.
+   note shows with high and max warnings, lowNote with low ones; ctx names the situation the range is for. */
+const LIMITS_MG = [
+  { id: 'dose', kind: 'dose', unit: 'g/hr', low: 1, high: 2, max: 9, ctx: 'ครรภ์เป็นพิษ', note: 'ฉลาก: ฉีดเข้าหลอดเลือดดำไม่ควรเร็วเกิน 150 mg/min (9 g/hr)', src: ['dm_mg'] },
+  { id: 'conc', kind: 'conc', unit: 'mg/ml', max: 200, note: 'ฉลาก: ต้องเจือจางให้เข้มข้นไม่เกิน 20% ก่อนหยด', src: ['dm_mg'] },
+  { id: 'day', kind: 'day', unit: 'g', high: 30, note: 'ฉลาก: รวม 24 ชม. ไม่ควรเกิน 30 ถึง 40 g ไตเสื่อมรุนแรงไม่เกิน 20 g ใน 48 ชม.', src: ['dm_mg', 'pfz_mg'] },
+  { id: 'load', kind: 'load', unit: 'g', high: 5, ctx: 'ครรภ์เป็นพิษ', src: ['dm_mg', 'who_mg'] },
+];
+const LIMITS_NICA = [
+  { id: 'dose', kind: 'dose', unit: 'mg/hr', low: 0.5, max: 15, src: ['dm_nica'] },
+];
+const LIMITS = {
+  ne4: [
+    { id: 'dose-kg', kind: 'dose', unit: 'mcg/kg/min', low: 0.01, high: 1, max: 3, note: 'เกิน 1 mcg/kg/min เฝ้าระวังหลอดเลือดหดตัว', src: ['pck'] },
+    { id: 'dose', kind: 'dose', unit: 'mcg/min', low: 0.5, high: 30, noWeight: true, ctx: 'ผู้ใหญ่', note: 'ใส่น้ำหนักเพื่อตรวจตามช่วง 0.01 ถึง 3 mcg/kg/min', src: ['pck'] },
+  ],
+  epi1: [
+    { id: 'dose-kg', kind: 'dose', unit: 'mcg/kg/min', low: 0.05, high: 2, ctx: 'septic shock', src: ['dm_epi'] },
+  ],
+  dopa: [
+    { id: 'dose-kg', kind: 'dose', unit: 'mcg/kg/min', low: 2, max: 50, src: ['dm_dopa'] },
+  ],
+  dobu: [
+    { id: 'dose-kg', kind: 'dose', unit: 'mcg/kg/min', low: 2.5, high: 15, max: 40, note: 'ฉลาก: บางรายต้องใช้ถึง 40 mcg/kg/min', src: ['dm_dobu'] },
+    { id: 'conc', kind: 'conc', unit: 'mg/ml', high: 5, note: 'ฉลาก: เคยใช้เข้มข้นสูงสุด 5 mg/ml', src: ['dm_dobu'] },
+  ],
+  vaso: [
+    { id: 'dose', kind: 'dose', unit: 'unit/min', low: 0.01, high: 0.07, max: 0.1, ctx: 'septic shock', note: 'ฉลาก: หลังผ่าตัดหัวใจใช้ถึง 0.1 unit/min เกินนั้นมีข้อมูลน้อย', src: ['dm_vaso'] },
+  ],
+  kcl: [
+    { id: 'dose', kind: 'dose', unit: 'mEq/hr', high: 10, max: 40, note: 'ฉลาก: เกิน 10 mEq/hr ใช้เฉพาะ K น้อยกว่า 2.0 ที่มีคลื่นหัวใจเปลี่ยนหรืออัมพาต และต้องติดตามคลื่นหัวใจต่อเนื่อง', src: ['dm_kcl'] },
+    { id: 'conc', kind: 'conc', unit: 'mEq/L', high: 40, ctx: 'เมื่อ K มากกว่า 2.5', src: ['dm_kcl'] },
+    { id: 'day', kind: 'day', unit: 'mEq', high: 200, max: 400, note: 'ฉลาก: เกิน 200 mEq ต่อวันใช้เฉพาะกรณีเร่งด่วนพร้อมติดตามคลื่นหัวใจ', src: ['dm_kcl'] },
+  ],
+  mg50: LIMITS_MG,
+  mg10: LIMITS_MG,
+  cagl: [
+    { id: 'dose-kg', kind: 'dose', unit: 'mg/kg/hr', low: 5.4, high: 21.5, ctx: 'ผู้ใหญ่ ช่วงเริ่ม', note: 'ฉลาก: หลังจากนั้นปรับตามระดับแคลเซียม', src: ['dm_ca'] },
+    { id: 'rate', kind: 'rate', unit: 'mg/min', max: 200, ctx: 'ผู้ใหญ่', src: ['dm_ca'] },
+    { id: 'load', kind: 'load', unit: 'g', high: 2, ctx: 'ผู้ใหญ่ ต่อครั้ง', src: ['dm_ca'] },
+  ],
+  bicarb: [
+    { id: 'dose-kg', kind: 'dose', unit: 'mEq/kg/hr', low: 0.25, high: 1.25, note: 'ฉลาก: 2 ถึง 5 mEq/kg ใน 4 ถึง 8 ชม. ในภาวะกรดที่ไม่เร่งด่วน', lowNote: 'ฉลาก: 2 ถึง 5 mEq/kg ใน 4 ถึง 8 ชม.', src: ['dm_bicarb'] },
+  ],
+  hep: [
+    { id: 'dose', kind: 'dose', unit: 'unit/24hr', low: 20000, high: 40000, note: 'ถ้าสั่งตามน้ำหนัก (เริ่ม 18 unit/kg/hr) ปรับตาม aPTT', src: ['dm_hep', 'raschke'] },
+    { id: 'load-kg', kind: 'load', unit: 'unit', perKg: true, high: 80, src: ['raschke'] },
+    { id: 'load', kind: 'load', unit: 'unit', high: 10000, noWeight: true, note: 'ฉลาก: ครั้งแรกทางหลอดเลือดดำ 5,000 ถึง 10,000 unit', src: ['dm_hep'] },
+  ],
+  ri: [
+    { id: 'conc', kind: 'conc', unit: 'unit/ml', low: 0.1, high: 1, lowLevel: 'warn', ctx: 'ตามฉลาก', src: ['dm_ins'] },
+  ],
+  nica10: LIMITS_NICA,
+  nica2: LIMITS_NICA,
+  ntg: [
+    { id: 'dose', kind: 'dose', unit: 'mcg/min', low: 5, lowNote: 'ฉลาก: เริ่ม 5 mcg/min', src: ['dm_ntg'] },
+  ],
+  amio: [
+    { id: 'dose', kind: 'dose', unit: 'mg/min', low: 0.5, high: 1, note: 'ฉลาก: 1 mg/min นาน 6 ชม. แล้ว 0.5 mg/min', src: ['amio'] },
+    { id: 'rate', kind: 'rate', unit: 'mg/min', max: 30, note: 'ฉลาก: เร็วเกิน 30 mg/min เสี่ยงความดันต่ำ', src: ['amio'] },
+    { id: 'conc', kind: 'conc', unit: 'mg/ml', high: 2, note: 'ฉลาก: เข้มข้นเกิน 2 mg/ml ให้ทาง central line', src: ['amio'] },
+    { id: 'day', kind: 'day', unit: 'mg', high: 2100, note: 'ฉลาก: ขนาดเฉลี่ยต่อวันเกิน 2,100 mg สัมพันธ์กับความดันต่ำ', src: ['amio'] },
+  ],
+  mida: [
+    { id: 'dose-kg', kind: 'dose', unit: 'mg/kg/hr', low: 0.02, high: 0.1, ctx: 'ผู้ใหญ่ ช่วงเริ่ม', note: 'ฉลาก: บางรายต้องใช้สูงกว่านี้', src: ['dm_mida'] },
+    { id: 'dose', kind: 'dose', unit: 'mg/hr', low: 1, high: 7, noWeight: true, ctx: 'ผู้ใหญ่ ช่วงเริ่ม', note: 'ฉลาก: บางรายต้องใช้สูงกว่านี้', src: ['dm_mida'] },
+    { id: 'load-kg', kind: 'load', unit: 'mg', perKg: true, high: 0.05, ctx: 'ผู้ใหญ่', src: ['dm_mida'] },
+    { id: 'load', kind: 'load', unit: 'mg', high: 4, noWeight: true, ctx: 'ผู้ใหญ่', src: ['dm_mida'] },
+  ],
+  prop: [
+    { id: 'dose-kg', kind: 'dose', unit: 'mcg/kg/min', low: 5, high: 50, max: 200 / 3, ctx: 'ICU sedation ผู้ใหญ่', note: 'ฉลาก: ไม่ควรเกิน 4 mg/kg/hr (66.67 mcg/kg/min) ยกเว้นประโยชน์มากกว่าความเสี่ยง', src: ['dm_prop'] },
+    { id: 'conc', kind: 'conc', unit: 'mg/ml', low: 2, lowLevel: 'warn', lowNote: 'ฉลาก: ถ้าเจือจางต้องไม่จางกว่า 2 mg/ml', src: ['dm_prop'] },
+  ],
+  dex: [
+    { id: 'dose-kg', kind: 'dose', unit: 'mcg/kg/hr', low: 0.2, high: 0.7, max: 1, ctx: 'ICU sedation', note: 'ฉลาก: หัตถการใช้ได้ถึง 1 mcg/kg/hr', src: ['dm_dex'] },
+    { id: 'load-kg', kind: 'load', unit: 'mcg', perKg: true, high: 1, src: ['dm_dex'] },
+    { id: 'load-min', kind: 'loadMin', unit: 'นาที', low: 10, lowLevel: 'warn', lowNote: 'ฉลาก: loading ให้ใน 10 นาที', src: ['dm_dex'] },
+    { id: 'hours', kind: 'hours', unit: 'ชม.', high: 24, highLevel: 'info', note: 'ฉลาก: ไม่ได้ระบุให้หยดต่อเนื่องเกิน 24 ชม.', src: ['dm_dex'] },
+  ],
+  oxy: [
+    { id: 'dose', kind: 'dose', unit: 'mU/min', low: 0.5, high: 10, highLevel: 'info', ctx: 'เร่งคลอดครบกำหนด', note: 'ฉลาก: เกิน 9 ถึง 10 mU/min แทบไม่จำเป็น หลังคลอดเพื่อห้ามเลือดฉลากไม่กำหนดอัตรา', src: ['dm_oxy'] },
+    { id: 'conc', kind: 'conc', unit: 'mU/ml', high: 40, note: 'ฉลาก: หลังคลอดผสมได้สูงสุด 40 unit ใน 1,000 ml', src: ['dm_oxy'] },
+  ],
+};
+// Shown under the warnings for drugs whose label gives no full range, so silence is not read as "dose OK".
+const LIMITS_NOTE = {
+  mo: 'ฉลากไม่ได้ให้ช่วงขนาดยาแบบหยดต่อเนื่อง แอปจึงไม่เตือนขนาดยาตัวนี้',
+  fen: 'ฉลากไม่ได้ให้ช่วงขนาดยาแบบหยดต่อเนื่อง แอปจึงไม่เตือนขนาดยาตัวนี้',
+  ri: 'ฉลากไม่ได้กำหนดช่วงขนาดยา แอปตรวจเฉพาะความเข้มข้น',
+  ntg: 'ฉลากเขียนว่าไม่มีขนาดที่เหมาะสมตายตัว แอปจึงเตือนเฉพาะเมื่อต่ำกว่าขนาดเริ่มต้น',
+};
 // DATA-END
 
 /* =====================================================================
@@ -1235,6 +1342,9 @@ function computeDrip(p) {
   const emptyHours = bagVolume / rate;
   const hangLimited = isPos(p.maxHang) && p.maxHang < emptyHours - 1e-9;
   const drugInfused = used * conc + loadSep;
+  // Drug given over the first 24 hours if the plan runs on (for per-day limits); a loading not run from the bag counts in full.
+  let drugFirst24 = loading && !(loading.mode === 'same' && loading.hours > 0) ? loading.drug : 0;
+  for (const s of plan) drugFirst24 += s.rate * conc * Math.max(0, Math.min(s.t1, 24) - s.t0);
   return {
     ok: true, undiluted, mixDrug, contPerBagExact, contPerBag, drugVolume, bagVolume, conc,
     rate, rate2, dosePerHour: rate * conc, dosePerHour2: rate2 ? rate2 * conc : null,
@@ -1245,9 +1355,71 @@ function computeDrip(p) {
     carryHours: carryRow ? (carryRow.endsBy === 'orderEnd' ? carryRow.projEnd : carryRow.end) : 0,
     carryHangLimited: carryRow ? (carryRow.endsBy === 'orderEnd' ? carryRow.projBy : carryRow.endsBy) === 'hang' : false,
     bags, containers, containersIfReuse, loadContainers, totalContainers, totalIfReuse,
-    totalVolume: used, drugInfused, drugInfusedCont: drugInfused / A,
+    totalVolume: used, drugInfused, drugInfusedCont: drugInfused / A, drugFirst24,
     schedule, leftoverEnd: open ? Math.max(0, last.left) : 0, leftoverHung: open ? last.hung : 0,
   };
+}
+
+/* ---------- dose and rate warnings ---------- */
+// Drug per hour (package unit) in a rate unit: mcg/kg/min, mg/min, unit/24hr and so on.
+function rateIn(perHour, pkgUnit, rateUnit, weight) {
+  const parts = String(rateUnit).split('/');
+  let v = convertAmount(perHour, pkgUnit, parts[0]);
+  if (parts.includes('kg')) v /= weight;
+  const per = parts[parts.length - 1];
+  if (per === 'min') v /= 60;
+  else if (per === '24hr') v *= 24;
+  return v;
+}
+
+// Concentration (package unit per ml) in a unit such as mg/ml, mEq/L or mU/ml.
+function concIn(conc, pkgUnit, concUnit) {
+  const [num, per] = String(concUnit).split('/');
+  return convertAmount(conc, pkgUnit, num) * (per === 'L' ? 1000 : 1);
+}
+
+// Values are compared exactly as fmt() shows them, so a dose shown as "50" is never called "above 50".
+const LEVEL_RANK = { danger: 0, warn: 1, info: 2 };
+
+/* One order against the rules of its drug (LIMITS). Returns the warnings, most serious first:
+   { id, kind, seg, level, value, limit, rule }. seg = main | step2 | load | bag | day | order.
+   value null = a loading with no time given, so its speed could not be checked.
+   id 'weight' = a per-kg rule was skipped because no body weight was given. */
+function checkLimits(rules, p, r) {
+  const out = [];
+  if (!rules || !r || !r.ok) return out;
+  const unit = p.pkgUnit, w = isPos(p.weight) ? p.weight : null, ld = r.loading;
+  let needWeight = false;
+  for (const L of rules) {
+    if (L.noWeight && w) continue;
+    if ((L.perKg || String(L.unit).split('/').includes('kg')) && !w) { needWeight = true; continue; }
+    const vals = [];
+    if (L.kind === 'dose' || L.kind === 'rate') {
+      if (L.kind === 'rate' && ld) vals.push({ seg: 'load', v: ld.hours > 0 ? rateIn(ld.drug / ld.hours, unit, L.unit, w) : null });
+      vals.push({ seg: 'main', v: rateIn(r.dosePerHour, unit, L.unit, w) });
+      if (r.dosePerHour2 != null) vals.push({ seg: 'step2', v: rateIn(r.dosePerHour2, unit, L.unit, w) });
+    } else if (L.kind === 'load') {
+      if (ld) vals.push({ seg: 'load', v: convertAmount(ld.drug, unit, L.unit) / (L.perKg ? w : 1) });
+    } else if (L.kind === 'loadMin') {
+      if (ld) vals.push({ seg: 'load', v: ld.hours * 60 });
+    } else if (L.kind === 'conc') vals.push({ seg: 'bag', v: concIn(r.conc, unit, L.unit) });
+    else if (L.kind === 'day') vals.push({ seg: 'day', v: convertAmount(r.drugFirst24, unit, L.unit) });
+    else if (L.kind === 'hours') vals.push({ seg: 'order', v: p.hours });
+    for (const { seg, v } of vals) {
+      if (v === null) { out.push({ id: L.id, kind: L.kind, seg, side: 'max', level: 'info', value: null, limit: L.max != null ? L.max : L.high, rule: L }); continue; }
+      if (!Number.isFinite(v)) continue;
+      const s = shown(v);
+      let side = null;
+      if (L.max != null && s > shown(L.max)) side = 'max';
+      else if (L.high != null && s > shown(L.high)) side = 'high';
+      else if (L.low != null && s < shown(L.low)) side = 'low';
+      if (!side) continue;
+      const level = side === 'max' ? 'danger' : side === 'high' ? (L.highLevel || 'warn') : (L.lowLevel || 'info');
+      out.push({ id: L.id, kind: L.kind, seg, side, level, value: v, limit: side === 'max' ? L.max : side === 'high' ? L.high : L.low, rule: L });
+    }
+  }
+  if (needWeight) out.push({ id: 'weight', kind: 'weight', seg: '', side: '', level: 'info', value: null, limit: null, rule: null });
+  return out.sort((a, b) => LEVEL_RANK[a.level] - LEVEL_RANK[b.level]);
 }
 
 /* ---------- number parsing and formatting ---------- */
@@ -1260,16 +1432,19 @@ const parseNum = s => {
   return Number.isFinite(n) ? n : null;
 };
 
+// The number fmt() prints: 3 significant figures below 1, 2 decimals below 100, 1 decimal below 1,000, then whole numbers.
+function shown(x) {
+  const a = Math.abs(x);
+  if (a === 0) return 0;
+  if (a < 1) return Number(x.toPrecision(3));
+  if (a < 100) return Number(x.toFixed(2));
+  if (a < 1000) return Number(x.toFixed(1));
+  return Math.round(x);
+}
+
 function fmt(x) {
   if (!Number.isFinite(x)) return '-';
-  const a = Math.abs(x);
-  let s;
-  if (a === 0) s = '0';
-  else if (a < 1) s = String(Number(x.toPrecision(3)));
-  else if (a < 100) s = String(Number(x.toFixed(2)));
-  else if (a < 1000) s = String(Number(x.toFixed(1)));
-  else s = String(Math.round(x));
-  const [i, d] = s.split('.');
+  const [i, d] = String(shown(x)).split('.');
   return i.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (d ? '.' + d : '');
 }
 
@@ -1812,6 +1987,45 @@ function syncAdvancedBadge(p) {
 const ICON_WARN = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
 const ICON_INFO = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
 
+// One dose or rate warning in words, every number taken from the rule itself.
+function limitMessage(a, word) {
+  if (a.id === 'weight') return 'ใส่น้ำหนักผู้ป่วยในช่องอัตราการให้ เพื่อตรวจขนาดยาเทียบช่วงที่แนะนำแบบต่อ kg';
+  const L = a.rule;
+  const u = esc(L.kind === 'load' && L.perKg ? `${L.unit}/kg` : L.unit.replace('/24hr', '/24 ชม.'));
+  const subject = {
+    dose: a.seg === 'step2' ? 'ขนาดยาหลังเปลี่ยนอัตรา' : 'ขนาดยาที่หยด',
+    rate: a.seg === 'load' ? 'ความเร็วให้ loading' : a.seg === 'step2' ? 'ความเร็วหลังเปลี่ยนอัตรา' : 'ความเร็วให้ยา',
+    load: 'ขนาด loading', loadMin: 'เวลาให้ loading', conc: `ความเข้มข้นใน${word}`,
+    day: 'ยารวมใน 24 ชม. แรก (ถ้าหยดตามนี้ต่อเนื่อง)', hours: 'ระยะเวลาที่สั่ง',
+  }[L.kind];
+  const src = L.src && L.src.length ? `<span class="lim-sub">ที่มา: ${srcHtml(L.src)}</span>` : '';
+  if (a.value === null) return `<b>loading ไม่ได้ใส่เวลา</b> จึงตรวจความเร็วไม่ได้: ไม่ควรเร็วเกิน ${fmt(a.limit)} ${u}${src}`;
+  const top = L.high != null ? L.high : L.max;
+  const range = L.low != null && top != null ? `${fmt(L.low)} ถึง ${fmt(top)}` : L.low != null ? `อย่างน้อย ${fmt(L.low)}` : `ไม่เกิน ${fmt(top)}`;
+  const ctx = L.ctx ? ` (${esc(L.ctx)})` : '';
+  const head = `<b>${subject} ${fmt(a.value)} ${u}</b>`;
+  const note = a.side === 'low' ? L.lowNote : L.note;
+  const tail = `${note ? `<span class="lim-sub">${esc(note)}</span>` : ''}${src}`;
+  let verdict;
+  if (a.side === 'max') verdict = `เกินค่าสูงสุด: ${fmt(L.max)} ${u}`;
+  else if (a.side === 'high') verdict = `${a.level === 'info' ? 'สูงกว่าที่ใช้บ่อย' : 'สูงกว่าที่แนะนำ'}: ${range} ${u}${ctx}`;
+  else verdict = a.level === 'info' ? `ต่ำกว่าที่แนะนำ: ${range} ${u}${ctx} ตรวจว่าพิมพ์ถูก` : `ต่ำกว่าที่กำหนด: ${range} ${u}${ctx}`;
+  return `${head} ${verdict}${tail}`;
+}
+
+// Dose and rate warnings above the amp count (rules in LIMITS); data-* lets the tests read them.
+function renderLimits(p, r, word) {
+  const d = state.custom ? null : state.drug;
+  const found = checkLimits(d ? LIMITS[d.id] : null, p, r);
+  $('#limitAlerts').innerHTML = found.map(a => `<li class="alert ${a.level}" data-rule="${esc(a.id)}" data-seg="${a.seg}" data-level="${a.level}">`
+    + `${a.level === 'info' ? ICON_INFO : ICON_WARN}<span>${limitMessage(a, word)}</span></li>`).join('');
+  const note = state.custom ? 'ยาที่กรอกเองไม่มีเกณฑ์เตือนขนาดยา ตรวจกับแนวทางของ รพ.'
+    : d && LIMITS_NOTE[d.id] ? LIMITS_NOTE[d.id]
+    : found.length ? 'คำเตือนอิงฉลากยาและ HAD สำหรับผู้ใหญ่ เป็นค่าเตือน ตรวจกับ order และแนวทางของ รพ.' : '';
+  $('#limitsNote').textContent = note;
+  $('#limitsNote').hidden = !note;
+}
+
 function drugName() {
   return state.drug ? state.drug.name : $('#drugName').value.trim();
 }
@@ -1884,6 +2098,7 @@ function recalc() {
 
   $('#resultEmpty').hidden = true;
   $('#resultMain').hidden = false;
+  renderLimits(p, r, word);
 
   // Hero
   const heroKey = `${r.totalContainers}|${form}|${r.bags}`;

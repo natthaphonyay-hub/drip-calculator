@@ -47,6 +47,9 @@ const DRIVER = String.raw`(() => {
   const read = () => ({
     params: readParams(), hero: $('#resultMain').hidden ? null : Number($('#heroCount').textContent),
     form: $('#heroForm').textContent, note: currentNote, empty: $('#resultEmpty').hidden ? '' : $('#resultEmpty').textContent,
+    limits: [...document.querySelectorAll('#limitAlerts li')].map(li => [li.dataset.rule, li.dataset.seg, li.dataset.level]),
+    limitText: [...document.querySelectorAll('#limitAlerts li')].map(li => li.textContent),
+    limitsNote: $('#limitsNote').hidden ? '' : $('#limitsNote').textContent,
   });
   const out = [];
   DRUGS.forEach((d, di) => {
@@ -88,6 +91,44 @@ const DRIVER = String.raw`(() => {
       });
     });
   });
+  // dose and rate warnings: for every dose rule, order a dose just past each limit (and at it), in the drug's own order unit
+  const pick = d => {
+    document.querySelector('#btnReset').click();
+    const search = $('#drugSearch');
+    search.focus(); search.value = d.name.slice(0, 4).toLowerCase(); fire(search, 'input');
+    const li = [...document.querySelectorAll('#drugList [data-i]')].find(x => comboItems[+x.dataset.i] && comboItems[+x.dataset.i].d === d);
+    li.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    document.querySelector('[data-mix="0"]').click();
+  };
+  Object.entries(LIMITS).forEach(([id, rules]) => {
+    const d = DRUGS.find(x => x.id === id);
+    rules.filter(L => L.kind === 'dose').forEach(L => {
+      [L.low, L.high, L.max].filter(x => x != null).forEach(edge => [edge, edge * (edge === L.low ? 0.9 : 1.1)].forEach(target => {
+        pick(d);
+        document.querySelector('.seg button[data-mode="dose"]').click();
+        const p = readParams();
+        const parts = L.unit.split('/');
+        let perHour = convertAmount(target, parts[0], p.pkgUnit);
+        if (parts.includes('kg')) perHour *= 60;
+        perHour = parts[parts.length - 1] === 'min' ? perHour * 60 : parts[parts.length - 1] === '24hr' ? perHour / 24 : perHour;
+        if (!L.noWeight) setVal('#weight', '60');
+        setVal('#doseValue', String(rateIn(perHour, p.pkgUnit, $('#doseUnit').value, 60)));
+        out.push({ drug: id, mode: 'limits', rule: L.id, target, ...read() });
+      }));
+    });
+  });
+  // a few warnings that are not about the drip dose
+  const cases = [
+    ['kcl', () => { document.querySelector('[data-mix="1"]').click(); setVal('#rate', '150'); }],          // 100 mEq/L and 15 mEq/hr
+    ['dex', () => { document.querySelector('.seg button[data-mode="dose"]').click(); setVal('#weight', '60'); setVal('#doseValue', '0.5');
+      const c = $('#loadOn'); c.checked = true; fire(c, 'change'); setVal('#loadMinutes', '0'); setVal('#hours', '48'); }],
+    ['ne4', () => setVal('#rate', '10')],                                                                    // no weight
+    ['mo', () => setVal('#rate', '10')],
+    ['ri', () => { setVal('#mixVolume', '1000'); setVal('#rate', '10'); }],                                   // 0.1 unit/ml is fine; then 0.05
+    ['ri', () => { setVal('#mixVolume', '2000'); setVal('#rate', '10'); }],
+  ];
+  cases.forEach(([id, act]) => { pick(DRUGS.find(x => x.id === id)); act(); out.push({ drug: id, mode: 'limits', ...read() }); });
+
   // keyboard path: type, arrow down, Enter
   document.querySelector('#btnReset').click();
   const s = $('#drugSearch'); s.focus(); s.value = 'kcl'; fire(s, 'input');
