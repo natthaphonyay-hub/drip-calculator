@@ -261,11 +261,12 @@
 
   .badge.ok { background: #dcfce7; color: #166534; }
   .badge.warn { background: #fef3c7; color: #92400e; }
+  .badge.gray { background: #e2e8f0; color: #334155; }
   .badge.edit { background: #ede9fe; color: #5b21b6; }
 
   .src { font-size: 12px; color: var(--text-2); }
   .src a { color: var(--primary-dark); }
-  .src .u { color: #b45309; font-weight: 600; }
+  .src .u { color: #475569; font-weight: 600; }
 
   .notes { list-style: none; display: flex; flex-direction: column; gap: 6px; }
   .notes li { font-size: 13px; background: #fffbeb; border: 1px solid #fde68a; color: #78350f; border-radius: var(--radius-sm); padding: 7px 10px; }
@@ -288,8 +289,14 @@
   .box-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .box-label { font-size: 14px; font-weight: 600; color: var(--primary-dark); }
 
-  .mix-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
+  /* the drug side also holds the unit menu, so it gets more room (25000 must show in full on a phone) */
+  .mix-row { display: grid; grid-template-columns: minmax(0, 1.3fr) auto minmax(0, 1fr); align-items: center; gap: 8px; }
   .mix-row.single { grid-template-columns: minmax(0, 1fr); }
+  /* very narrow screens (old phones, or the app inside a Google Sites frame): drug box above, solution box below */
+  @media (max-width: 350px) {
+    .mix-row { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    .mix-colon { justify-self: center; font-size: 22px; }
+  }
   .mix-row .input-unit input { padding: 10px 6px; }
   .mix-row .input-unit select { padding-left: 8px; padding-right: 22px; background-position: right 4px center; }
   /* the search list must float above the cards below it */
@@ -333,7 +340,11 @@
   .opt-chip:hover { border-color: var(--primary-line); }
   .opt-chip[aria-checked="true"], .opt-chip[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); box-shadow: inset 0 0 0 1px var(--primary); }
   .opt-chip[aria-checked="true"] .oc-main::before, .opt-chip[aria-pressed="true"] .oc-main::before { content: '✓'; color: var(--primary-dark); }
-  .opt-chip .u-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warning); display: inline-block; }
+  /* preset mixes without a checked source: grey, with the words "ยังไม่ยืนยัน" */
+  .opt-chip.unv { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+  .opt-chip.unv .oc-sub { color: #475569; }
+  .opt-chip.unv[aria-pressed="true"] { background: #e2e8f0; border-color: #475569; box-shadow: inset 0 0 0 1px #475569; }
+  .opt-chip.unv[aria-pressed="true"] .oc-main::before { color: #475569; }
 
   details.advanced { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 0 14px; }
 
@@ -542,7 +553,6 @@
           </div>
           <span id="dcBadge"></span>
         </div>
-        <div class="src" id="dcSrc"></div>
         <div><button class="link-btn" id="btnEditPkg" type="button">แก้ขนาดบรรจุ</button></div>
       </div>
 
@@ -847,7 +857,7 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.1 | November 2026</div>
+        <div class="footer-info-version">Version 1.2 | November 2026</div>
       </div>
     </div>
     <div class="footer-divider">
@@ -866,13 +876,13 @@
 // DATA-START
 const DM = setid => 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=' + setid;
 const SOURCES = {
-  line: { t: 'ข้อความ LINE พี่เภสัช 5 พ.ย. 2569' },
+  line: { t: 'ข้อมูลจากเภสัชกรผู้ใช้งาน (5 พ.ย. 2569)' },
   user: { t: 'ตารางสูตรทั่วไปที่ส่งมา', unverified: true },
   warin: { t: 'บัญชียา รพ.วารินชำราบ ปีงบ 2562' },
   nlem: { t: 'บัญชียาหลักแห่งชาติ 2562' },
   pnk: { t: 'แนวทางการผสม HAD รพ.โพนนาแก้ว', u: 'https://pnkhospital.moph.go.th/Wordpress/e-Form/phr/04.%E0%B9%81%E0%B8%99%E0%B8%A7%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%9C%E0%B8%AA%E0%B8%A1%20HAD.pdf' },
-  pck: { t: 'HAD card Norepinephrine รพ.พระจอมเกล้า', u: 'https://phrachomklao.moph.go.th/wp-content/plugins/download-attachments/includes/download.php?id=8271' },
-  si: { t: 'คู่มือยาความเสี่ยงสูง รพ.ศิริราช', u: 'https://www2.si.mahidol.ac.th/km/download/3722' },
+  pck: { t: 'HAD card Norepinephrine รพ.พระจอมเกล้า', u: 'https://phrachomklao.moph.go.th/wp-content/uploads/2022/02/11_Norepinephrine1.pdf' },
+  si: { t: 'คู่มือยาความเสี่ยงสูง รพ.ศิริราช', u: 'https://www2.si.mahidol.ac.th/km/download/3722', dl: true },
   levophed: { t: 'ฉลาก Levophed', u: 'https://labeling.pfizer.com/ShowLabeling.aspx?id=20428' },
   amio: { t: 'ฉลาก Amiodarone injection', u: 'https://www.henryschein.com/assets/Medical/1049860.pdf' },
   who_mg: { t: 'WHO MgSO4 (RH086)', u: 'https://extranet.who.int/prequal/sites/default/files/whopar_files/RH086part4.pdf' },
@@ -1430,7 +1440,8 @@ function srcHtml(keys) {
     const s = SOURCES[k];
     if (!s) return '';
     if (s.unverified) return `<span class="u">${esc(s.t)} (ยังไม่ยืนยัน)</span>`;
-    return s.u ? `<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.t)}</a>` : esc(s.t);
+    // dl: the site sends the file as a download instead of opening it, so say so on the link
+    return s.u ? `<a href="${esc(s.u)}" target="_blank" rel="noopener">${esc(s.t)}${s.dl ? ' (ไฟล์ PDF ดาวน์โหลด)' : ''}</a>` : esc(s.t);
   }).filter(Boolean).join(', ');
 }
 
@@ -1571,8 +1582,7 @@ function renderDrugCard() {
   $('#dcPkg').textContent = pkgNow;
   const unverified = isUnverified(d.pkgSrc);
   $('#dcBadge').innerHTML = state.edited ? '<span class="badge edit">แก้ขนาดบรรจุเอง</span>'
-    : unverified ? '<span class="badge warn">บางค่ายังไม่ยืนยัน</span>' : '<span class="badge ok">ขนาดบรรจุมีที่มา</span>';
-  $('#dcSrc').innerHTML = `ขนาดบรรจุ: ${srcHtml(d.pkgSrc)}`;
+    : unverified ? '<span class="badge gray">บางค่ายังไม่ยืนยัน</span>' : '<span class="badge ok">ขนาดบรรจุมีที่มา</span>';
   $('#btnEditPkg').textContent = $('#pkgFields').hidden ? 'แก้ขนาดบรรจุ' : 'ซ่อนช่องแก้ขนาดบรรจุ';
   renderNotes();
 }
@@ -1647,8 +1657,8 @@ function renderMixes() {
   box.innerHTML = d.mixes.map((m, i) => {
     const l = mixLabel(m, d);
     const unv = isUnverified(m.src);
-    return `<button type="button" class="opt-chip" data-mix="${i}" aria-pressed="${state.mixIndex === i}" title="${esc((m.src || []).map(k => SOURCES[k] ? SOURCES[k].t : '').join(', '))}">`
-      + `<span class="oc-main">${esc(l.main)}${unv ? ' <span class="u-dot" aria-label="ยังไม่ยืนยัน"></span>' : ''}</span><span class="oc-sub">${esc(l.sub)}</span></button>`;
+    return `<button type="button" class="opt-chip${unv ? ' unv' : ''}" data-mix="${i}" aria-pressed="${state.mixIndex === i}" title="${esc((m.src || []).map(k => SOURCES[k] ? SOURCES[k].t : '').join(', '))}">`
+      + `<span class="oc-main">${esc(l.main)}</span><span class="oc-sub">${esc(l.sub)}${unv ? ' ยังไม่ยืนยัน' : ''}</span></button>`;
   }).join('');
 }
 
@@ -1797,6 +1807,22 @@ function packageText(p, name) {
   return `${name || 'ยา'} ${fmt(p.pkgAmount)} ${p.pkgUnit}${isPos(p.pkgVolume) ? '/' + fmt(p.pkgVolume) + ' ml' : ''}`;
 }
 
+// A number box must never cut digits off (25000 showing as "2500" is a tenfold misread),
+// so shrink the font of any box whose value is wider than the box.
+const fitCtx = document.createElement('canvas').getContext('2d');
+function fitInput(el) {
+  el.style.fontSize = '';
+  if (!el.value || !el.clientWidth) return;
+  const cs = getComputedStyle(el);
+  const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 1;
+  const base = parseFloat(cs.fontSize);
+  const width = size => { fitCtx.font = `${cs.fontWeight} ${size}px ${cs.fontFamily}`; return fitCtx.measureText(el.value).width; };
+  let size = base;
+  while (size > 11 && width(size) > room) size -= 1;
+  if (size !== base) el.style.fontSize = size + 'px';
+}
+function fitInputs() { document.querySelectorAll('.input-unit input').forEach(fitInput); }
+
 function recalc() {
   const p = readParams();
   const form = $('#pkgForm').value, unit = p.pkgUnit;
@@ -1809,6 +1835,7 @@ function recalc() {
   $('#headerDrug').textContent = name ? packageText(p, name) : 'นับจำนวน amp ยาหยดต่อ 1 order';
   if (state.drug) renderDrugCard();
   renderSpecial();
+  fitInputs(); // after the sections above are shown or hidden, so every visible box gets measured
 
   // Hint under the mix row.
   const hint = $('#mixHint');
@@ -2084,6 +2111,9 @@ function init() {
 
   recalc();
   if (new URLSearchParams(location.search).has('example')) runExample(false);
+  // box widths change on rotate, and digit widths change once the web font arrives
+  window.addEventListener('resize', fitInputs);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitInputs);
 }
 
 document.addEventListener('DOMContentLoaded', init);
