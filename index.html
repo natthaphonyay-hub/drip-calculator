@@ -434,6 +434,11 @@
   .alert.danger { background: #fef2f2; border-color: #fca5a5; color: #7f1d1d; border-width: 2px; }
   .limit-alerts:not(:empty) { margin-bottom: 12px; }
   .limit-alerts .alert a { color: inherit; }
+  /* vivid solid colours so the dose warnings cannot be missed */
+  .limit-alerts .alert.danger { background: #dc2626; border-color: #b91c1c; color: #fff; }
+  .limit-alerts .alert.warn { background: #facc15; border: 2px solid #ca8a04; color: #422006; }
+  .limit-alerts .alert.info { background: #0ea5e9; border: 2px solid #0284c7; color: #fff; }
+  .limit-alerts .alert { font-size: 15px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
   .alert .lim-sub { display: block; font-size: 12.5px; margin-top: 4px; }
   .limits-note { font-size: 12.5px; color: var(--text-2); margin: -4px 2px 12px; }
 
@@ -868,7 +873,7 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.4 | November 2026</div>
+        <div class="footer-info-version">Version 1.5 | November 2026</div>
       </div>
     </div>
     <div class="footer-divider">
