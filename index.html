@@ -340,6 +340,9 @@
   .opt-chip:hover { border-color: var(--primary-line); }
   .opt-chip[aria-checked="true"], .opt-chip[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); box-shadow: inset 0 0 0 1px var(--primary); }
   .opt-chip[aria-checked="true"] .oc-main::before, .opt-chip[aria-pressed="true"] .oc-main::before { content: '✓'; color: var(--primary-dark); }
+  /* the letter printed in colour on the real bottle (D5W: yellow W, D5S: purple S); the thin dark edge keeps yellow readable on white */
+  .dil-mark.yellow { color: #facc15; -webkit-text-stroke: 0.75px #854d0e; }
+  .dil-mark.purple { color: #9333ea; }
   /* preset mixes without a checked source: grey, with the words "ยังไม่ยืนยัน" */
   .opt-chip.unv { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
   .opt-chip.unv .oc-sub { color: #475569; }
@@ -857,7 +860,7 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.2 | November 2026</div>
+        <div class="footer-info-version">Version 1.3 | November 2026</div>
       </div>
     </div>
     <div class="footer-divider">
@@ -907,8 +910,9 @@ const SOURCES = {
 
 const DILUENTS = {
   NSS: { label: 'NSS', sub: '0.9% NaCl' },
-  D5W: { label: 'D5W', sub: '5% dextrose' },
-  D5S: { label: 'D5S', sub: 'D5 ใน NSS' },
+  // mark = the letter printed in colour on the real bottle label (from the user, 5 Nov 2026; NSS and LRS are plain)
+  D5W: { label: 'D5W', sub: '5% dextrose', mark: { ch: 'W', tone: 'yellow' } },
+  D5S: { label: 'D5S', sub: 'D5 ใน NSS', mark: { ch: 'S', tone: 'purple' } },
   LRS: { label: 'LRS', sub: "Lactated Ringer's" },
   SWFI: { label: 'SWFI', sub: 'น้ำกลั่นสำหรับฉีด' },
   none: { label: 'ไม่เจือจาง', sub: 'ยาเปล่าในไซริงจ์' },
@@ -1610,7 +1614,7 @@ function renderDiluents() {
   const withOther = state.custom || !state.drug.diluents;
   if (!keys.includes(state.diluent) && !(withOther && state.diluent === 'other')) state.diluent = keys[0];
   box.innerHTML = keys.map(k => `<button type="button" class="opt-chip" role="radio" data-dil="${k}" aria-checked="${state.diluent === k}">`
-    + `<span class="oc-main">${esc(DILUENTS[k].label)}</span><span class="oc-sub">${esc(DILUENTS[k].sub)}</span></button>`).join('')
+    + `<span class="oc-main">${dilLabelHtml(k)}</span><span class="oc-sub">${esc(DILUENTS[k].sub)}</span></button>`).join('')
     + (withOther ? `<button type="button" class="opt-chip" role="radio" data-dil="other" aria-checked="${state.diluent === 'other'}"><span class="oc-main">อื่นๆ</span><span class="oc-sub">ระบุเอง</span></button>` : '');
   $('#dilOther').hidden = state.diluent !== 'other';
   const d = state.drug;
@@ -1624,6 +1628,15 @@ function renderDiluents() {
   }
   $('#dilNote').innerHTML = note;
   syncUndiluted();
+}
+
+// Diluent name with its bottle-label letter coloured, e.g. D5 + yellow W.
+function dilLabelHtml(k) {
+  const d = DILUENTS[k];
+  const i = d.mark ? d.label.lastIndexOf(d.mark.ch) : -1;
+  if (i < 0) return esc(d.label);
+  // one wrapping span, so the chip's flex gap does not split "D5W" into "D5 W"
+  return `<span>${esc(d.label.slice(0, i))}<span class="dil-mark ${d.mark.tone}">${esc(d.mark.ch)}</span>${esc(d.label.slice(i + d.mark.ch.length))}</span>`;
 }
 
 function diluentLabel() {
