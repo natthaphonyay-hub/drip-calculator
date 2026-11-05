@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#0e7490">
+<title>Drip Calculator</title>
+<meta name="description" content="คำนวณจำนวน amp หรือ vial ของยาฉีดที่ผสมหยดต่อเนื่อง ต่อ 1 order จากสูตรผสม อัตราหยด และระยะเวลา">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Drip Calculator - นับ amp ยาหยดต่อ order">
+<meta property="og:description" content="คำนวณจำนวน amp ยาฉีดที่ต้องใช้ต่อ 1 order จากสูตรผสม อัตราหยด และระยะเวลา">
+<meta property="og:locale" content="th_TH">
+<meta name="author" content="DoseLogic">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%A7%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #0891b2;
+    --primary-dark: #0e7490;
+    --primary-deep: #155e75;
+    --primary-soft: #ecfeff;
+    --primary-line: #a5f3fc;
+    --accent: #f97316;
+    --success: #10b981;
+    --success-dark: #059669;
+    --warning: #f59e0b;
+    --warning-dark: #b45309;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --bg: #f0fdfa;
+    --card: #ffffff;
+    --field: #fafafa;
+    --text: #0f172a;
+    --text-2: #475569;
+    --muted: #94a3b8;
+    --border: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --pill: 9999px;
+    --mono: 'JetBrains Mono', 'IBM Plex Sans Thai', ui-monospace, Menlo, monospace;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: 'IBM Plex Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(8, 145, 178, 0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  [hidden] { display: none !important; }
+
+  button, a { -webkit-tap-highlight-color: transparent; }
+  button:focus-visible, a:focus-visible, summary:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Header ---------- */
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, var(--primary-deep) 100%);
+    color: #fff;
+    padding: 14px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 4px 20px rgba(8, 145, 178, 0.3);
+  }
+
+  .header-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-icon {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: grid;
+    place-items: center;
+  }
+
+  .header-icon svg { width: 24px; height: 24px; }
+
+  .header-text { flex: 1; min-width: 0; }
+
+  .header-text h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+  }
+
+  .header-text p {
+    font-size: 12.5px;
+    opacity: 0.92;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-btn {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .header-btn:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-2px); }
+  .header-btn svg { width: 20px; height: 20px; }
+
+  /* ---------- Layout ---------- */
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: fadeInUp 0.45s ease-out both;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .card:hover { box-shadow: var(--shadow-lg); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 0;
+  }
+
+  .card-title-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  }
+
+  .card-title-icon svg { width: 19px; height: 19px; }
+
+  .card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* ---------- Form ---------- */
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .form-row.pkg { grid-template-columns: 1.25fr 1fr 0.8fr; }
+
+  @media (max-width: 600px) {
+    .form-row.pkg { grid-template-columns: 1fr 1fr; }
+    .form-row.pkg > :first-child { grid-column: 1 / -1; }
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+  }
+
+  .opt { font-weight: 400; color: var(--muted); font-size: 12px; }
+
+  .form-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 11px 13px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: 16px;
+    color: var(--text);
+    background: var(--field);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.12);
+  }
+
+  .form-input::placeholder, .input-unit input::placeholder { color: var(--muted); font-weight: 400; }
+
+  select.form-input {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    background-image: var(--chevron);
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 18px;
+    padding-right: 38px;
+  }
+
+  input[type="date"].form-input, input[type="time"].form-input { display: block; -webkit-appearance: none; appearance: none; }
+  .form-row.when { grid-template-columns: 1.35fr 1fr; gap: 10px; }
+  .form-row.when .form-input { padding-left: 10px; padding-right: 8px; }
+
+  .input-unit {
+    display: flex;
+    align-items: stretch;
+    min-height: 48px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--field);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .input-unit:focus-within {
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.12);
+  }
+
+  .input-unit input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 16px;
+    color: var(--text);
+    outline: none;
+  }
+
+  .input-unit .unit-tag,
+  .input-unit select {
+    flex-shrink: 0;
+    border: 0;
+    border-left: 2px solid var(--border);
+    background-color: #f1f5f9;
+    color: var(--text-2);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-unit select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-right: 28px;
+    background-image: var(--chevron);
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 15px;
+    max-width: 62%;
+  }
+
+  .input-unit.big input {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--primary-dark);
+  }
+
+  /* Small, plain placeholders so an empty big field never looks filled in. */
+  .input-unit.big input::placeholder {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  .list-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 10px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: var(--text-2);
+  }
+
+  .list-status { display: flex; align-items: center; gap: 7px; min-width: 0; }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+
+  .dot.ok { background: var(--success); animation: ping 2.2s infinite; }
+  .dot.warn { background: var(--warning); }
+  .dot.load { background: var(--info); animation: blink 1s infinite; }
+
+  .list-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  .link-btn {
+    border: 0;
+    background: none;
+    color: var(--primary-dark);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .link-btn:hover { background: var(--primary-soft); }
+  .link-btn svg { width: 14px; height: 14px; }
+
+  .drug-note {
+    font-size: 13px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #78350f;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+  }
+
+  .btn-example {
+    flex-shrink: 0;
+    border: 2px solid var(--primary-line);
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: var(--pill);
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .btn-example:hover { background: #cffafe; transform: translateY(-1px); }
+
+  /* ---------- Order boxes ---------- */
+  .box {
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .box.mix { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd; }
+  .box.rate { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #fde68a; }
+  .box.time { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #bbf7d0; }
+
+  .box.rate .box-label { color: var(--warning-dark); }
+  .box.time .box-label { color: #166534; }
+
+  .box-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .box-label { font-size: 14px; font-weight: 600; color: var(--primary-dark); }
+
+  .mix-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mix-colon {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1;
+  }
+
+  .mix-row .input-unit, .box .input-unit { background: #fff; }
+
+  .hint { font-size: 13px; color: var(--text-2); min-height: 1.2em; }
+  .hint b { color: var(--primary-dark); }
+
+  .seg {
+    display: flex;
+    background: #fff;
+    border-radius: var(--pill);
+    padding: 4px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  .seg button {
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    padding: 6px 14px;
+    border-radius: var(--pill);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .seg button[aria-pressed="true"] {
+    background: var(--warning);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+  }
+
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .chip {
+    border: 2px solid #86efac;
+    background: #fff;
+    color: #166534;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: var(--pill);
+    cursor: pointer;
+  }
+
+  .chip[aria-pressed="true"] { background: var(--success); border-color: var(--success); color: #fff; }
+
+  details.advanced {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0 14px;
+  }
+
+  details.advanced summary {
+    cursor: pointer;
+    padding: 12px 0;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-2);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  details.advanced summary::-webkit-details-marker { display: none; }
+
+  details.advanced summary::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.2s ease;
+  }
+
+  details.advanced[open] summary::before { transform: rotate(45deg); }
+
+  .adv-badge {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border-radius: var(--pill);
+    padding: 1px 8px;
+  }
+
+  .adv-body { display: flex; flex-direction: column; gap: 14px; padding-bottom: 14px; }
+  .small { font-size: 12px; color: var(--muted); }
+
+  .check {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .check input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--primary);
+  }
+
+  /* ---------- Result ---------- */
+  .result-card .card-header {
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+    color: #fff;
+    border-bottom: 0;
+  }
+
+  .result-card .card-title-icon { background: rgba(255, 255, 255, 0.2); }
+
+  .result-empty {
+    text-align: center;
+    color: var(--text-2);
+    background: #f8fafc;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    font-size: 14px;
+  }
+
+  .result-empty b { color: var(--text); display: block; font-size: 15px; margin-bottom: 4px; }
+
+  .hero {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 2px solid #86efac;
+    border-radius: var(--radius);
+    padding: 18px 14px;
+    text-align: center;
+  }
+
+  .hero.flash { animation: flash 0.8s ease-out; }
+
+  .hero-label { font-size: 13px; font-weight: 600; color: #166534; }
+
+  .hero-value {
+    font-family: var(--mono);
+    font-size: 54px;
+    font-weight: 700;
+    color: var(--success-dark);
+    line-height: 1.1;
+  }
+
+  .hero-value small { font-size: 22px; margin-left: 6px; }
+
+  .hero-drug { font-size: 14px; font-weight: 500; color: var(--text-2); }
+  .hero-sub { margin-top: 6px; font-size: 15px; font-weight: 600; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  @media (min-width: 700px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+  .stat {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 8px;
+    text-align: center;
+  }
+
+  .stat-label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .stat-value.text { font-family: inherit; font-size: 17px; }
+  .stat-unit { font-size: 12px; color: var(--muted); }
+
+  .stat.conc .stat-value { color: var(--primary-dark); }
+  .stat.time .stat-value { color: var(--accent); }
+  .stat.vol .stat-value { color: var(--info); }
+  .stat.got .stat-value { color: var(--warning-dark); }
+
+  .dose-line {
+    font-size: 14px;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary-line);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--primary-deep);
+  }
+
+  .alerts { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+  .alert {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 14px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid;
+  }
+
+  .alert svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 3px; }
+  .alert.warn { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+  .alert.info { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
+
+  /* ---------- Note ---------- */
+  .note-card .card-header {
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    border-bottom: 2px solid #c7d2fe;
+  }
+
+  .note-card .card-title-icon { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+
+  .note-content {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.85;
+    overflow-wrap: anywhere;
+    padding: 16px;
+    background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
+  }
+
+  /* One div per note line; wrapped text hangs under its own bullet. */
+  .note-content .nl { white-space: pre-wrap; }
+  .note-hint { font-size: 12px; color: var(--muted); padding: 0 16px 14px; background: #f5f7ff; }
+
+  .btn-copy {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 2px solid #c7d2fe;
+    background: #fff;
+    color: #4f46e5;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .btn-copy svg { width: 16px; height: 16px; }
+  .btn-copy:hover { background: #eef2ff; }
+  .btn-copy.done { border-color: #86efac; color: var(--success-dark); }
+
+  /* ---------- Schedule ---------- */
+  .schedule-card .card-header {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-bottom: 2px solid #93c5fd;
+  }
+
+  .schedule-card .card-title-icon { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+
+  .table-wrap { overflow-x: auto; }
+
+  .schedule-table { width: 100%; border-collapse: collapse; }
+
+  .schedule-table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    text-align: left;
+    padding: 10px 10px;
+    background: #f8fafc;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .schedule-table th:first-child, .schedule-table td:first-child { text-align: center; width: 54px; }
+
+  .schedule-table td {
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: top;
+  }
+
+  .schedule-table .t { display: block; font-family: var(--mono); font-weight: 700; color: var(--primary-dark); }
+  .schedule-table .d { display: block; font-size: 12px; color: var(--muted); }
+
+  .bag-no {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+  }
+
+  tr.carry .bag-no { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); font-size: 11px; box-shadow: none; }
+  tr.last .bag-no { background: linear-gradient(135deg, var(--warning) 0%, var(--accent) 100%); }
+
+  .tag {
+    display: inline-block;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: var(--pill);
+    margin-top: 4px;
+  }
+
+  .tag.empty { background: #dcfce7; color: #166534; }
+  .tag.hang { background: #ffedd5; color: #9a3412; }
+  .tag.end { background: #fee2e2; color: #991b1b; }
+
+  /* ---------- Footer ---------- */
+  .footer {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #fff;
+    padding: 28px 16px;
+    margin-top: 32px;
+  }
+
+  .footer-inner { max-width: 860px; margin: 0 auto; }
+
+  .footer-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .footer-brand { display: flex; align-items: center; gap: 12px; }
+
+  .footer-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    display: grid;
+    place-items: center;
+  }
+
+  .footer-icon svg { width: 25px; height: 25px; }
+  .footer-brand h3 { font-size: 18px; font-weight: 700; }
+  .footer-brand p { font-size: 12px; opacity: 0.7; }
+  .footer-info { text-align: right; }
+  .footer-info-label { font-size: 12px; opacity: 0.6; }
+  .footer-info-org { font-size: 16px; font-weight: 700; }
+  .footer-info-version { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+
+  @media (max-width: 600px) { .footer-info { text-align: left; } }
+
+  .footer-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+    text-align: center;
+    font-size: 11.5px;
+    opacity: 0.6;
+  }
+
+  /* ---------- Motion ---------- */
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes ping {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
+    70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+  @keyframes blink { 50% { opacity: 0.25; } }
+  @keyframes flash {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
+    100% { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="header-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 2h4M12 2v3"/>
+        <path d="M7 5h10a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V6a1 1 0 0 1 1-1z"/>
+        <path d="M10 9h4M10 12h3"/>
+        <path d="M12 18v4"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>Drip Calculator</h1>
+      <p id="headerDrug">นับจำนวน amp ยาหยดต่อ 1 order</p>
+    </div>
+    <button class="header-btn" id="btnReset" type="button" title="ล้างค่าทั้งหมด" aria-label="ล้างค่าทั้งหมด">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <!-- 1. ยาและขนาดบรรจุ -->
+  <section class="card" aria-labelledby="t-drug">
+    <div class="card-header">
+      <div class="card-title" id="t-drug">
+        <span class="card-title-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4"/><path d="M11 2v3L9 8v11a3 3 0 0 0 6 0V8l-2-3V2"/><path d="M9 13h6"/></svg>
+        </span>
+        ยาและขนาดบรรจุ
+      </div>
+      <button class="btn-example" id="btnExample" type="button">ลองตัวอย่าง</button>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label" for="drugSelect">เลือกยาจากรายการ</label>
+        <select id="drugSelect" class="form-input"></select>
+        <div class="list-bar">
+          <span class="list-status"><span class="dot" id="listDot"></span><span id="listStatus">กำลังเตรียมรายการยา</span></span>
+          <span class="list-actions">
+            <button class="link-btn" id="btnReload" type="button">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              โหลดรายการใหม่
+            </button>
+            <a class="link-btn" id="linkSheet" href="#" target="_blank" rel="noopener" hidden>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              เพิ่ม/แก้รายการยา
+            </a>
+          </span>
+        </div>
+      </div>
+
+      <div class="form-row pkg">
+        <div class="form-group">
+          <label class="form-label" for="drugName">ชื่อยา</label>
+          <input id="drugName" class="form-input" type="text" placeholder="เช่น Norepinephrine" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pkgAmount">ยาต่อ 1 หลอด</label>
+          <div class="input-unit">
+            <input id="pkgAmount" type="text" inputmode="decimal" placeholder="เช่น 4" autocomplete="off">
+            <select id="pkgUnit" aria-label="หน่วยของยา"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pkgVolume">ปริมาตรต่อหลอด</label>
+          <div class="input-unit">
+            <input id="pkgVolume" type="text" inputmode="decimal" placeholder="เช่น 4" autocomplete="off">
+            <span class="unit-tag">ml</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="pkgForm">ชนิดบรรจุ</label>
+          <select id="pkgForm" class="form-input">
+            <option value="amp">amp</option>
+            <option value="vial">vial</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="diluent">สารละลาย <span class="opt">ไม่บังคับ</span></label>
+          <input id="diluent" class="form-input" type="text" placeholder="เช่น D5W, NSS" autocomplete="off">
+        </div>
+      </div>
+
+      <p class="drug-note" id="drugNote" hidden></p>
+    </div>
+  </section>
+
+  <!-- 2. คำสั่งใช้ยา -->
+  <section class="card" aria-labelledby="t-order">
+    <div class="card-header">
+      <div class="card-title" id="t-order">
+        <span class="card-title-icon" aria-hidden="true">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </span>
+        คำสั่งใช้ยา (Order)
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="box mix">
+        <div class="box-label">สูตรผสม (ยา : สารละลาย)</div>
+        <div class="mix-row">
+          <div class="input-unit big">
+            <input id="mixAmount" type="text" inputmode="decimal" placeholder="8" aria-label="ปริมาณยาที่ผสม" autocomplete="off">
+            <select id="mixUnit" aria-label="หน่วยของยาที่ผสม">
+              <option value="drug">mg</option>
+              <option value="cont">amp</option>
+            </select>
+          </div>
+          <span class="mix-colon" aria-hidden="true">:</span>
+          <div class="input-unit big">
+            <input id="mixVolume" type="text" inputmode="decimal" placeholder="500" aria-label="ปริมาตรสารละลาย (ml)" autocomplete="off">
+            <span class="unit-tag">ml</span>
+          </div>
+        </div>
+        <div class="hint" id="mixHint"></div>
+      </div>
+
+      <div class="box rate">
+        <div class="box-head">
+          <span class="box-label">อัตราการให้</span>
+          <div class="seg" role="group" aria-label="วิธีสั่งอัตรา">
+            <button type="button" data-mode="mlhr" aria-pressed="true">ml/hr</button>
+            <button type="button" data-mode="dose" aria-pressed="false">ขนาดยา</button>
+          </div>
+        </div>
+        <div id="rateMlhr">
+          <div class="input-unit big">
+            <input id="rate" type="text" inputmode="decimal" placeholder="30" aria-label="อัตรา ml/hr" autocomplete="off">
+            <span class="unit-tag">ml/hr</span>
+          </div>
+        </div>
+        <div id="rateDose" hidden>
+          <div class="input-unit big">
+            <input id="doseValue" type="text" inputmode="decimal" placeholder="0.1" aria-label="ขนาดยาที่สั่ง" autocomplete="off">
+            <select id="doseUnit" aria-label="หน่วยขนาดยา"></select>
+          </div>
+          <div class="hint" id="rateCalc" style="margin-top:8px"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="weight">น้ำหนักผู้ป่วย (kg) <span class="opt">ใส่เมื่อสั่งเป็นต่อ kg</span></label>
+          <input id="weight" class="form-input" type="text" inputmode="decimal" placeholder="ไม่บังคับ" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="box time">
+        <div class="box-head">
+          <span class="box-label">ระยะเวลาที่ต้องเตรียมยา</span>
+          <div class="chips" id="hourChips">
+            <button type="button" class="chip" data-h="12">12</button>
+            <button type="button" class="chip" data-h="24">24</button>
+            <button type="button" class="chip" data-h="48">48</button>
+            <button type="button" class="chip" data-h="72">72</button>
+          </div>
+        </div>
+        <div class="input-unit big">
+          <input id="hours" type="text" inputmode="decimal" value="24" aria-label="ระยะเวลา (ชั่วโมง)" autocomplete="off">
+          <span class="unit-tag">ชม.</span>
+        </div>
+        <div class="form-row when">
+          <div class="form-group">
+            <label class="form-label" for="startDate">วันที่เริ่ม</label>
+            <input id="startDate" class="form-input" type="date">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="startTime">เวลาเริ่ม</label>
+            <input id="startTime" class="form-input" type="time">
+          </div>
+        </div>
+      </div>
+
+      <details class="advanced" id="advanced">
+        <summary>ตัวเลือกเพิ่มเติม <span class="adv-badge" id="advBadge" hidden></span></summary>
+        <div class="adv-body">
+          <div class="form-group">
+            <label class="form-label" for="carryVolume">ถุงที่แขวนอยู่ยังเหลือ (ml)</label>
+            <input id="carryVolume" class="form-input" type="text" inputmode="decimal" placeholder="เว้นว่าง = เริ่มถุงใหม่" autocomplete="off">
+            <span class="small">ใช้ตอนคิดรอบถัดไป ถุงเดิมจะหยดต่อจนหมดก่อน แล้วค่อยเริ่มถุงใหม่</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="maxHang">เปลี่ยนถุงทุกไม่เกิน (ชม.)</label>
+            <input id="maxHang" class="form-input" type="text" inputmode="decimal" placeholder="เว้นว่าง = ใช้จนหมดถุง" autocomplete="off">
+            <span class="small">ใส่ตามความคงตัวของยาหลังผสม หรือแนวปฏิบัติของหน่วยงาน</span>
+          </div>
+          <div class="form-group" id="carryHungGroup" hidden>
+            <label class="form-label" for="carryHung">ถุงเดิมแขวนมาแล้ว (ชม.)</label>
+            <input id="carryHung" class="form-input" type="text" inputmode="decimal" placeholder="เว้นว่าง = นับจากเวลาเริ่ม" autocomplete="off">
+            <span class="small">ใช้คิดว่าถุงเดิมต้องเปลี่ยนเมื่อไร</span>
+          </div>
+          <label class="check"><input type="checkbox" id="includeDrugVol"> <span>นับปริมาตรยาที่เติมรวมในถุงด้วย (เช่น 500 ml + ยา 8 ml = 508 ml)</span></label>
+          <label class="check"><input type="checkbox" id="multiDose"> <span>ยาที่เหลือในหลอดที่เปิดแล้ว ใช้ผสมถุงถัดไปได้ (multi-dose vial)</span></label>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- 3. ผลการคำนวณ -->
+  <section class="card result-card" aria-labelledby="t-result" id="resultCard">
+    <div class="card-header">
+      <div class="card-title" id="t-result">
+        <span class="card-title-icon" aria-hidden="true">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </span>
+        ผลการคำนวณ
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="result-empty" id="resultEmpty"></div>
+      <div id="resultMain" hidden>
+        <div class="card-body" style="padding:0">
+          <div class="hero" id="hero">
+            <div class="hero-label" id="heroLabel">ต้องใช้ใน 24 ชม.</div>
+            <div class="hero-value"><span id="heroCount">0</span><small id="heroForm">amp</small></div>
+            <div class="hero-drug" id="heroDrug"></div>
+            <div class="hero-sub" id="heroSub"></div>
+          </div>
+          <div class="stats">
+            <div class="stat conc"><div class="stat-label">ความเข้มข้น</div><div class="stat-value" id="statConc">-</div><div class="stat-unit" id="statConcUnit"></div></div>
+            <div class="stat time"><div class="stat-label">1 ถุงหยดได้</div><div class="stat-value text" id="statBagTime">-</div><div class="stat-unit" id="statBagVol"></div></div>
+            <div class="stat vol"><div class="stat-label">ปริมาตรที่ให้</div><div class="stat-value" id="statTotalVol">-</div><div class="stat-unit" id="statTotalVolUnit"></div></div>
+            <div class="stat got"><div class="stat-label">ยาที่ได้รับจริง</div><div class="stat-value" id="statInfused">-</div><div class="stat-unit" id="statInfusedUnit"></div></div>
+          </div>
+          <div class="dose-line" id="doseLine"></div>
+          <ul class="alerts" id="alerts"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Pharmacist Note -->
+  <section class="card note-card" id="noteCard" aria-labelledby="t-note" hidden>
+    <div class="card-header">
+      <div class="card-title" id="t-note">
+        <span class="card-title-icon" aria-hidden="true">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </span>
+        Pharmacist Note
+      </div>
+      <button class="btn-copy" id="btnCopy" type="button">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        <span id="btnCopyText">คัดลอก</span>
+      </button>
+    </div>
+    <div class="note-content" id="noteText"></div>
+    <div class="note-hint">กดคัดลอก แล้ววางในระบบได้เลย ข้อความเป็นตัวหนังสือธรรมดา ย่อหน้าด้วยเว้นวรรค</div>
+  </section>
+
+  <!-- 5. ตารางเปลี่ยนถุง -->
+  <section class="card schedule-card" id="scheduleCard" aria-labelledby="t-sched" hidden>
+    <div class="card-header">
+      <div class="card-title" id="t-sched">
+        <span class="card-title-icon" aria-hidden="true">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </span>
+        ตารางเปลี่ยนถุง
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="schedule-table">
+        <thead><tr><th>ถุง</th><th>เริ่ม</th><th>หมด/เปลี่ยน</th><th>ใช้ไป</th></tr></thead>
+        <tbody id="scheduleBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-main">
+      <div class="footer-brand">
+        <div class="footer-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2h4M12 2v3"/>
+            <path d="M7 5h10a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V6a1 1 0 0 1 1-1z"/>
+            <path d="M10 9h4M10 12h3"/>
+            <path d="M12 18v4"/>
+          </svg>
+        </div>
+        <div>
+          <h3>Drip Calculator</h3>
+          <p>IV Infusion Amp Counting Tool</p>
+        </div>
+      </div>
+      <div class="footer-info">
+        <div class="footer-info-label">พัฒนาโดย</div>
+        <div class="footer-info-org">DoseLogic</div>
+        <div class="footer-info-version">Version 1.0 | November 2026</div>
+      </div>
+    </div>
+    <div class="footer-divider">
+      © 2026 Drip Calculator | ใช้ประมาณการจำนวนยาที่ต้องเตรียมและเบิกจ่ายเท่านั้น ตรวจสอบคำสั่งใช้ยา ขนาดบรรจุ และความคงตัวของยาทุกครั้ง
+    </div>
+  </div>
+</footer>
+
+<script>
+'use strict';
+
+/* ========================= ตั้งค่า (แก้ตรงนี้) ========================= */
+// ID ของ Google Sheet รายการยา = ข้อความยาวในลิงก์ระหว่าง /d/ กับ /edit
+// ชีตต้องแชร์แบบ "ทุกคนที่มีลิงก์ = ผู้ดู" แอปจึงอ่านได้
+const SHEET_ID = '';
+const SHEET_TAB = 'ยา';
+
+// รายการตั้งต้น ใช้เมื่อยังโหลดชีตไม่ได้
+const STARTER_DRUGS = [
+  { name: 'Norepinephrine', amount: 4, unit: 'mg', volume: 4, form: 'amp', mixAmount: 8, mixVolume: 500 },
+  { name: 'Potassium chloride (KCl)', amount: 20, unit: 'mEq', volume: 10, form: 'amp' },
+  { name: 'Adrenaline (Epinephrine)', amount: 1, unit: 'mg', volume: 1, form: 'amp' },
+];
+
+/* ========================= CALC ENGINE ========================= */
+// CALC-START (pure functions, no DOM; tested in tests/test-calc.mjs)
+const MASS_TO_MG = { g: 1000, mg: 1, mcg: 0.001 };
+const isMass = u => Object.prototype.hasOwnProperty.call(MASS_TO_MG, u);
+const isPos = v => typeof v === 'number' && Number.isFinite(v) && v > 0;
+// Round up while ignoring floating-point noise (1.1 / 0.1 = 11.000000000000002 -> 11).
+const ceilSafe = x => Math.ceil(Math.round(x * 1e9) / 1e9);
+
+function convertAmount(value, from, to) {
+  if (from === to) return value;
+  if (isMass(from) && isMass(to)) return value * MASS_TO_MG[from] / MASS_TO_MG[to];
+  return NaN;
+}
+
+function doseUnitsFor(unit) {
+  if (isMass(unit)) return ['mcg/min', 'mcg/kg/min', 'mcg/hr', 'mcg/kg/hr', 'mg/min', 'mg/hr', 'mg/kg/hr', 'g/hr'];
+  return [unit + '/hr', unit + '/kg/hr', unit + '/min', unit + '/kg/min'];
+}
+
+function parseDoseUnit(s) {
+  const parts = String(s).split('/');
+  return { num: parts[0], perKg: parts.includes('kg'), perMin: parts[parts.length - 1] === 'min' };
+}
+
+// Drug amount per hour (in the package unit) for an order written as a dose.
+function dosePerHour(value, doseUnit, pkgUnit, weight) {
+  const d = parseDoseUnit(doseUnit);
+  let v = convertAmount(value, d.num, pkgUnit);
+  if (d.perKg) v *= weight;
+  if (d.perMin) v *= 60;
+  return v;
+}
+
+// p: pkgAmount, pkgUnit, pkgVolume, mixAmount, mixUnit ('drug' | 'cont'), mixVolume,
+//    rateMode ('mlhr' | 'dose'), rate, doseValue, doseUnit, weight, hours,
+//    carryVolume, carryHung, maxHang, includeDrugVolume, multiDose
+function computeDrip(p) {
+  const missing = [];
+  if (!isPos(p.pkgAmount)) missing.push('ยาต่อ 1 หลอด');
+  if (!isPos(p.mixAmount)) missing.push('ปริมาณยาที่ผสม');
+  if (!isPos(p.mixVolume)) missing.push('ปริมาตรสารละลาย');
+  if (p.rateMode === 'dose') {
+    if (!isPos(p.doseValue)) missing.push('ขนาดยาที่สั่ง');
+    else if (parseDoseUnit(p.doseUnit).perKg && !isPos(p.weight)) missing.push('น้ำหนักผู้ป่วย');
+  } else if (!isPos(p.rate)) {
+    missing.push('อัตรา ml/hr');
+  }
+  if (!isPos(p.hours)) missing.push('ระยะเวลา');
+  if (missing.length) return { ok: false, missing };
+
+  const A = p.pkgAmount;
+  const mixDrug = p.mixUnit === 'cont' ? p.mixAmount * A : p.mixAmount; // drug per bag, package unit
+  const contPerBagExact = mixDrug / A;
+  const contPerBag = ceilSafe(contPerBagExact);
+  const drugVolume = isPos(p.pkgVolume) ? contPerBagExact * p.pkgVolume : null;
+  const bagVolume = p.mixVolume + (p.includeDrugVolume && drugVolume ? drugVolume : 0);
+  const conc = mixDrug / bagVolume; // package unit per ml
+
+  let rate = p.rate;
+  if (p.rateMode === 'dose') {
+    const perHour = dosePerHour(p.doseValue, p.doseUnit, p.pkgUnit, p.weight);
+    if (!Number.isFinite(perHour)) return { ok: false, missing: ['หน่วยขนาดยาที่ตรงกับหน่วยของยา'] };
+    rate = perHour / conc;
+  }
+
+  const H = p.hours;
+  const emptyHours = bagVolume / rate;
+  const hangLimited = isPos(p.maxHang) && p.maxHang < emptyHours - 1e-9;
+  const bagHours = hangLimited ? p.maxHang : emptyHours;
+  // A bag already hanging runs until it is empty, or until the bag-change time is up
+  // (counting the hours it has already hung).
+  const carry = isPos(p.carryVolume) ? p.carryVolume : 0;
+  const carryHung = isPos(p.carryHung) ? p.carryHung : 0;
+  const carryEmptyHours = carry / rate;
+  const carryAllowed = isPos(p.maxHang) ? Math.max(0, p.maxHang - carryHung) : Infinity;
+  const carryHangLimited = carry > 0 && carryAllowed < carryEmptyHours - 1e-9;
+  const carryHours = carry ? Math.min(carryEmptyHours, carryAllowed) : 0;
+  const newHours = H - carryHours;
+  const bags = newHours > 1e-9 ? ceilSafe(newHours / bagHours) : 0;
+  const containersIfReuse = bags === 0 ? 0 : ceilSafe(bags * contPerBagExact);
+  const containers = bags === 0 ? 0 : p.multiDose ? containersIfReuse : bags * contPerBag;
+
+  const schedule = [];
+  if (carry) {
+    const end = Math.min(carryHours, H);
+    schedule.push({
+      carry: true, start: 0, end, used: rate * end, left: carry - rate * end, hung: carryHung + end,
+      endsBy: carryHours <= H + 1e-9 ? (carryHangLimited ? 'hang' : 'empty') : 'orderEnd',
+    });
+  }
+  for (let i = 0; i < bags; i++) {
+    const start = carryHours + i * bagHours;
+    const fullEnd = start + bagHours;
+    const end = Math.min(fullEnd, H);
+    const used = rate * (end - start);
+    schedule.push({
+      no: i + 1, start, end, used, left: bagVolume - used, hung: end - start,
+      endsBy: fullEnd <= H + 1e-9 ? (hangLimited ? 'hang' : 'empty') : 'orderEnd',
+    });
+  }
+
+  const last = schedule[schedule.length - 1];
+  const open = last && last.endsBy === 'orderEnd';
+  const totalVolume = rate * H;
+  const drugInfused = totalVolume * conc;
+  return {
+    ok: true, mixDrug, contPerBagExact, contPerBag, drugVolume, bagVolume, conc, rate,
+    emptyHours, hangLimited, bagHours, discardPerBag: hangLimited ? bagVolume - rate * bagHours : 0,
+    carry, carryHung, carryEmptyHours, carryHangLimited, carryHours, bags, containers, containersIfReuse,
+    totalVolume, drugInfused, drugInfusedCont: drugInfused / A, dosePerHour: rate * conc,
+    schedule, leftoverEnd: open ? Math.max(0, last.left) : 0, leftoverHung: open ? last.hung : 0,
+  };
+}
+
+/* ---------- reading the drug list sheet ---------- */
+// Splits CSV text into rows of cells (handles quotes, commas and line breaks inside quotes).
+function csvRows(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') q = false;
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(cell); rows.push(row); row = []; cell = '';
+    } else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+// "25,000" and "1,500.5" = thousands; "0,5" or "2,25" (decimal comma keyboards) = 0.5 and 2.25.
+const parseNum = s => {
+  let t = String(s ?? '').trim().replace(/\s+/g, '');
+  if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) t = t.replace(/,/g, '');
+  else t = t.replace(',', '.');
+  const n = parseFloat(t);
+  return Number.isFinite(n) ? n : null;
+};
+
+const UNIT_ALIASES = {
+  mg: 'mg', 'มก': 'mg', 'มก.': 'mg', 'มิลลิกรัม': 'mg',
+  mcg: 'mcg', 'µg': 'mcg', 'μg': 'mcg', ug: 'mcg', 'ไมโครกรัม': 'mcg',
+  g: 'g', gm: 'g', gram: 'g', 'กรัม': 'g',
+  meq: 'mEq', mmol: 'mmol',
+  unit: 'unit', units: 'unit', u: 'unit', 'ยูนิต': 'unit', iu: 'IU',
+};
+const normUnit = s => { const t = String(s ?? '').trim(); return UNIT_ALIASES[t.toLowerCase()] || t; };
+const normForm = s => {
+  const t = String(s ?? '').trim();
+  if (/^amp|^ampoule|^ampule|^แอมป์/i.test(t)) return 'amp';
+  if (/^vial|^ไวอัล/i.test(t)) return 'vial';
+  return t || 'amp';
+};
+
+const SHEET_COLS = {
+  name: ['ชื่อยา', 'ชื่อ', 'drug', 'name'],
+  amount: ['ยาต่อหลอด', 'ปริมาณยาต่อหลอด', 'ปริมาณต่อหลอด', 'amount', 'strength'],
+  unit: ['หน่วย', 'หน่วยยา', 'unit'],
+  volume: ['mlต่อหลอด', 'ปริมาตรต่อหลอด', 'ปริมาตร', 'volume'],
+  form: ['ชนิดบรรจุ', 'บรรจุ', 'ชนิด', 'form'],
+  mixAmount: ['ผสมยา', 'ปริมาณที่ผสม', 'mix'],
+  mixVolume: ['ผสมในml', 'ผสมใน', 'ปริมาตรผสม'],
+  diluent: ['สารละลาย', 'diluent'],
+  note: ['หมายเหตุ', 'note'],
+};
+
+// gviz CSV text -> { list, skipped }. Rows need a name, a number per container and a unit.
+function parseDrugSheet(text) {
+  if (/^\s*</.test(text)) return { list: [], skipped: 0 }; // an HTML page = the sheet is not shared
+  const rows = csvRows(text);
+  if (!rows.length) return { list: [], skipped: 0 };
+  const head = rows[0].map(h => String(h).replace(/\s+/g, '').toLowerCase());
+  const used = new Set(); const idx = {};
+  for (const [key, aliases] of Object.entries(SHEET_COLS)) {
+    let i = head.findIndex((h, j) => !used.has(j) && aliases.includes(h));
+    if (i < 0) i = head.findIndex((h, j) => !used.has(j) && h && aliases.some(a => h.startsWith(a)));
+    idx[key] = i;
+    if (i >= 0) used.add(i);
+  }
+  if (idx.name < 0 || idx.amount < 0) return { list: [], skipped: 0 };
+  const get = (r, k) => (idx[k] >= 0 ? String(r[idx[k]] ?? '').trim() : '');
+  const list = []; let skipped = 0;
+  for (const r of rows.slice(1)) {
+    const name = get(r, 'name');
+    if (!name) continue;
+    const amount = parseNum(get(r, 'amount'));
+    const unit = normUnit(get(r, 'unit'));
+    if (!isPos(amount) || !unit) { skipped++; continue; }
+    const volume = parseNum(get(r, 'volume'));
+    const mixAmount = parseNum(get(r, 'mixAmount'));
+    const mixVolume = parseNum(get(r, 'mixVolume'));
+    list.push({
+      name, amount, unit, volume: isPos(volume) ? volume : null, form: normForm(get(r, 'form')),
+      mixAmount: isPos(mixAmount) ? mixAmount : null, mixVolume: isPos(mixVolume) ? mixVolume : null,
+      diluent: get(r, 'diluent'), note: get(r, 'note'),
+    });
+  }
+  list.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) || a.amount - b.amount);
+  return { list, skipped };
+}
+
+/* ---------- number and time formatting ---------- */
+function fmt(x) {
+  if (!Number.isFinite(x)) return '-';
+  const a = Math.abs(x);
+  let s;
+  if (a === 0) s = '0';
+  else if (a < 1) s = String(Number(x.toPrecision(3)));
+  else if (a < 100) s = String(Number(x.toFixed(2)));
+  else if (a < 1000) s = String(Number(x.toFixed(1)));
+  else s = String(Math.round(x));
+  const [i, d] = s.split('.');
+  return i.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (d ? '.' + d : '');
+}
+
+function fmtDuration(h) {
+  const m = Math.round(h * 60);
+  const hh = Math.floor(m / 60), mm = m % 60;
+  if (!hh) return mm + ' นาที';
+  return hh + ' ชม.' + (mm ? ' ' + mm + ' นาที' : '');
+}
+
+// Picks g, mg or mcg so the number reads naturally.
+function bestMass(value, unit) {
+  const mg = convertAmount(value, unit, 'mg');
+  if (mg >= 1000) return { v: mg / 1000, u: 'g' };
+  if (mg < 1) return { v: mg * 1000, u: 'mcg' };
+  return { v: mg, u: 'mg' };
+}
+
+function concText(conc, unit) {
+  if (isMass(unit)) { const b = bestMass(conc, unit); return { v: fmt(b.v), u: b.u + '/ml' }; }
+  return { v: fmt(conc), u: unit + '/ml' };
+}
+
+// "480 mcg/hr (8 mcg/min, 0.133 mcg/kg/min)" for mass drugs, "1,000 unit/hr (16.7 unit/kg/hr)" otherwise.
+function doseText(perHour, unit, weight) {
+  if (isMass(unit)) {
+    const h = bestMass(perHour, unit);
+    const m = bestMass(perHour / 60, unit);
+    let kg = '';
+    if (isPos(weight)) {
+      const mcgKgMin = convertAmount(perHour, unit, 'mcg') / 60 / weight;
+      kg = mcgKgMin >= 1000 ? `, ${fmt(mcgKgMin / 1000)} mg/kg/min` : `, ${fmt(mcgKgMin)} mcg/kg/min`;
+    }
+    return `${fmt(h.v)} ${h.u}/hr (${fmt(m.v)} ${m.u}/min${kg})`;
+  }
+  return `${fmt(perHour)} ${unit}/hr${isPos(weight) ? ` (${fmt(perHour / weight)} ${unit}/kg/hr)` : ''}`;
+}
+
+/* ---------- dates (Thai months, Buddhist year) ---------- */
+const TH_MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const TH_MON_FULL = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+const pad = n => String(n).padStart(2, '0');
+const addHours = (d, h) => new Date(d.getTime() + Math.round(h * 60) * 60000);
+const fmtClock = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fmtDay = d => `${d.getDate()} ${TH_MON[d.getMonth()]}`;
+const fmtDayYear = d => `${fmtDay(d)} ${d.getFullYear() + 543}`;
+const fmtDateLong = d => `วันที่ ${d.getDate()} ${TH_MON_FULL[d.getMonth()]} ${d.getFullYear() + 543} เวลา ${fmtClock(d)} น.`;
+const fmtRel = h => { const m = Math.round(h * 60); return `ชม.ที่ ${Math.floor(m / 60)}:${pad(m % 60)}`; };
+
+/* ---------- Pharmacist note ---------- */
+// Plain text for the shared medical record read by every profession:
+// same layout as the ATB Calculator note, one fact per line, ASCII and Thai only
+// (no symbols that older Thai hospital systems turn into "?"), no space-aligned columns.
+// o: { name, form, diluent, start }
+function buildNoteText(p, r, o) {
+  const unit = p.pkgUnit, form = o.form || 'amp', H = fmt(p.hours);
+  const A = '    - ', B = '        - ';
+  const at = h => (o.start ? `${fmtDay(addHours(o.start, h))} ${fmtClock(addHours(o.start, h))} น.` : fmtRel(h));
+  const pkg = `${fmt(p.pkgAmount)} ${unit}/${isPos(p.pkgVolume) ? fmt(p.pkgVolume) + ' ml' : form}`;
+  const mix = `${fmt(r.mixDrug)} ${unit}${p.mixUnit === 'cont' ? ` (${fmt(p.mixAmount)} ${form})` : ''}`
+    + ` in ${o.diluent ? o.diluent + ' ' : ''}${fmt(p.mixVolume)} ml`
+    + (p.includeDrugVolume && r.drugVolume ? ` (รวม ${fmt(r.bagVolume)} ml)` : '');
+  const rate = p.rateMode === 'dose'
+    ? `${fmt(p.doseValue)} ${p.doseUnit}${parseDoseUnit(p.doseUnit).perKg ? ` (BW ${fmt(p.weight)} kg)` : ''} = ${fmt(r.rate)} ml/hr`
+    : `${fmt(r.rate)} ml/hr`;
+  const c = concText(r.conc, unit);
+  const partial = Math.abs(r.contPerBagExact - Math.round(r.contPerBagExact)) > 1e-6;
+
+  const L = ['Pharmacist note'];
+  L.push(`${A}${o.name || 'ยา'} (${pkg}) ${mix} IV drip ${rate}`);
+  L.push(`${B}ความเข้มข้น ${c.v} ${c.u}, ได้รับยา ${doseText(r.dosePerHour, unit, p.weight)}`);
+  L.push(`${B}1 ถุงหยดได้ ${fmtDuration(r.emptyHours)}${r.hangLimited ? `, เปลี่ยนถุงทุก ${fmtDuration(r.bagHours)}` : ''}`);
+  if (o.start) L.push(`${A}เริ่มให้ยา ${fmtDateLong(o.start)}`);
+  if (r.carry) L.push(`${A}ถุงเดิมเหลือ ${fmt(r.carry)} ml ${r.carryHangLimited ? 'เปลี่ยนถุง' : 'หมด'} ${at(r.carryHours)}`);
+  if (r.bags) {
+    const per = p.multiDose ? `ถุงละ ${fmt(r.contPerBagExact)} ${form} ใช้ยาส่วนเหลือต่อ`
+      : partial ? `ถุงละ ${fmt(r.contPerBagExact)} ${form} เปิด ${r.contPerBag} ${form}`
+      : `ถุงละ ${r.contPerBag} ${form}`;
+    L.push(`${A}เตรียมยา${r.carry ? 'เพิ่ม' : ''} ${H} ชม. ${r.bags} ถุง (${per}) รวม ${r.containers} ${form}`);
+    for (const b of r.schedule) {
+      if (b.carry) continue;
+      L.push(`${B}ถุงที่ ${b.no} เริ่ม ${at(b.start)} ${r.hangLimited ? 'เปลี่ยน' : 'หมด'} ${at(b.start + r.bagHours)}`
+        + (r.hangLimited ? ` (เหลือทิ้ง ${fmt(r.discardPerBag)} ml)` : ''));
+    }
+  } else {
+    L.push(`${A}ไม่ต้องเตรียมยาเพิ่มใน ${H} ชม.`);
+  }
+  L.push(`${A}ครบ ${H} ชม.${o.start ? ` (${at(p.hours)})` : ''}`);
+  L.push(`${B}ได้รับยารวม ${fmt(r.drugInfused)} ${unit} (${fmt(r.totalVolume)} ml)`);
+  if (r.leftoverEnd > 0) {
+    const last = r.schedule[r.schedule.length - 1];
+    L.push(`${B}${last.carry ? 'ถุงเดิม' : 'ถุงที่ ' + last.no} ยังเหลือ ${fmt(r.leftoverEnd)} ml`);
+  }
+  return L.join('\n');
+}
+// CALC-END
+
+/* ========================= UI ========================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage blocked: the page still works */ } },
+};
+
+const PKG_UNITS = ['mg', 'mcg', 'g', 'mEq', 'mmol', 'unit', 'IU'];
+const CACHE_KEY = 'drip-calc-druglist-' + (SHEET_ID || 'starter');
+const num = id => parseNum($(id).value);
+
+let drugList = [];
+let listInfo = { source: 'starter', time: null, skipped: 0 };
+let rateMode = 'mlhr';
+let lastHero = '';
+
+/* ---------- drug list ---------- */
+const drugKey = d => [d.name, d.amount, d.unit, d.volume].join('|');
+const drugLabel = d => `${d.name} ${fmt(d.amount)} ${d.unit}${d.volume ? '/' + fmt(d.volume) + ' ml' : ''} (${d.form})`;
+
+// Key of the drug chosen in the menu; read it before drugList is replaced.
+function selectedDrugKey() {
+  const v = $('#drugSelect').value;
+  return v && v !== 'custom' && drugList[+v] ? drugKey(drugList[+v]) : null;
+}
+
+function renderDrugOptions(keepKey) {
+  const sel = $('#drugSelect');
+  const wasCustom = sel.value === 'custom';
+  sel.innerHTML = '<option value="">เลือกยา...</option>'
+    + drugList.map((d, i) => `<option value="${i}">${esc(drugLabel(d))}</option>`).join('')
+    + '<option value="custom">กรอกเอง (ไม่มีในรายการ)</option>';
+  if (keepKey) {
+    // The same item may sit at another position (or be gone) after a reload.
+    const i = drugList.findIndex(d => drugKey(d) === keepKey);
+    sel.value = i >= 0 ? String(i) : 'custom';
+  } else if (wasCustom) sel.value = 'custom';
+}
+
+function setListStatus(state) {
+  const dot = $('#listDot'), el = $('#listStatus'), n = drugList.length;
+  const skipped = listInfo.skipped ? ` ข้ามแถวที่กรอกไม่ครบ ${listInfo.skipped} แถว` : '';
+  dot.className = 'dot';
+  if (state === 'loading') { dot.classList.add('load'); el.textContent = 'กำลังโหลดรายการยาจาก Google Sheet'; return; }
+  if (state === 'sheet') {
+    dot.classList.add('ok');
+    el.textContent = `รายการยาจาก Google Sheet ${n} รายการ (อัปเดต ${fmtClock(listInfo.time)})${skipped}`;
+    return;
+  }
+  if (!SHEET_ID) { el.textContent = `รายการตั้งต้น ${n} รายการ`; return; }
+  dot.classList.add('warn');
+  el.textContent = listInfo.source === 'cache'
+    ? `โหลดชีตไม่ได้ ใช้รายการที่จำไว้ในเครื่อง ${n} รายการ${listInfo.time ? ' (ของ ' + fmtDay(listInfo.time) + ' ' + fmtClock(listInfo.time) + ')' : ''}`
+    : `โหลดชีตไม่ได้ ใช้รายการตั้งต้น ${n} รายการ`;
+}
+
+function loadCachedList() {
+  try {
+    const c = JSON.parse(store.get(CACHE_KEY) || 'null');
+    if (c && Array.isArray(c.list) && c.list.length) return c;
+  } catch { /* ignore a corrupt cache */ }
+  return null;
+}
+
+async function refreshList() {
+  if (!SHEET_ID) { setListStatus('starter'); return; }
+  setListStatus('loading');
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(SHEET_TAB)}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const { list, skipped } = parseDrugSheet(await res.text());
+    if (!list.length) throw new Error('empty sheet');
+    const keep = selectedDrugKey();
+    drugList = list;
+    listInfo = { source: 'sheet', time: new Date(), skipped };
+    store.set(CACHE_KEY, JSON.stringify({ time: listInfo.time.toISOString(), list }));
+    renderDrugOptions(keep);
+    setListStatus('sheet');
+  } catch (e) {
+    setListStatus('fail');
+  }
+}
+
+function setPkgUnit(u) {
+  const sel = $('#pkgUnit');
+  if (u && ![...sel.options].some(o => o.value === u)) sel.add(new Option(u, u));
+  sel.value = u || 'mg';
+}
+
+function setPkgForm(f) {
+  const sel = $('#pkgForm');
+  if (f && ![...sel.options].some(o => o.value === f)) sel.add(new Option(f, f));
+  sel.value = f || 'amp';
+}
+
+function applyDrug(d) {
+  $('#drugName').value = d.name;
+  $('#pkgAmount').value = d.amount;
+  setPkgUnit(d.unit);
+  $('#pkgVolume').value = d.volume ?? '';
+  setPkgForm(d.form);
+  if (d.mixAmount && d.mixVolume) {
+    $('#mixAmount').value = d.mixAmount;
+    $('#mixVolume').value = d.mixVolume;
+  } else {
+    $('#mixAmount').value = '';
+    $('#mixVolume').value = '';
+  }
+  $('#mixUnit').value = 'drug';
+  $('#diluent').value = d.diluent || '';
+  const note = $('#drugNote');
+  note.hidden = !d.note;
+  note.textContent = d.note ? 'หมายเหตุ: ' + d.note : '';
+  syncUnits();
+}
+
+function clearDrugFields() {
+  ['#drugName', '#pkgAmount', '#pkgVolume', '#mixAmount', '#mixVolume', '#diluent'].forEach(id => { $(id).value = ''; });
+  setPkgUnit('mg'); setPkgForm('amp'); $('#mixUnit').value = 'drug';
+  $('#drugNote').hidden = true;
+  syncUnits();
+}
+
+// Keeps unit labels in step with the package (mix unit menu, dose units).
+function syncUnits() {
+  const unit = $('#pkgUnit').value, form = $('#pkgForm').value;
+  const mix = $('#mixUnit');
+  mix.options[0].textContent = unit;
+  mix.options[1].textContent = form;
+  const ds = $('#doseUnit'), prev = ds.value, units = doseUnitsFor(unit);
+  ds.innerHTML = units.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('');
+  ds.value = units.includes(prev) ? prev : units[0];
+}
+
+/* ---------- inputs ---------- */
+function readParams() {
+  return {
+    pkgAmount: num('#pkgAmount'), pkgUnit: $('#pkgUnit').value, pkgVolume: num('#pkgVolume'),
+    mixAmount: num('#mixAmount'), mixUnit: $('#mixUnit').value, mixVolume: num('#mixVolume'),
+    rateMode, rate: num('#rate'), doseValue: num('#doseValue'), doseUnit: $('#doseUnit').value, weight: num('#weight'),
+    hours: num('#hours'), carryVolume: num('#carryVolume'), carryHung: num('#carryHung'), maxHang: num('#maxHang'),
+    includeDrugVolume: $('#includeDrugVol').checked, multiDose: $('#multiDose').checked,
+  };
+}
+
+function getStart() {
+  const d = $('#startDate').value, t = $('#startTime').value;
+  if (!d || !t) return null;
+  const x = new Date(`${d}T${t}`);
+  return Number.isNaN(x.getTime()) ? null : x;
+}
+
+function setStartNow() {
+  const now = new Date();
+  now.setMinutes(0, 0, 0);
+  $('#startDate').value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  $('#startTime').value = `${pad(now.getHours())}:00`;
+}
+
+function setRateMode(mode) {
+  rateMode = mode;
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+  $('#rateMlhr').hidden = mode !== 'mlhr';
+  $('#rateDose').hidden = mode !== 'dose';
+}
+
+function syncChips() {
+  const h = num('#hours');
+  document.querySelectorAll('#hourChips .chip').forEach(c => c.setAttribute('aria-pressed', String(+c.dataset.h === h)));
+}
+
+function syncAdvancedBadge(p) {
+  const n = [isPos(p.carryVolume), isPos(p.maxHang), p.includeDrugVolume, p.multiDose].filter(Boolean).length;
+  const b = $('#advBadge');
+  b.hidden = !n;
+  b.textContent = n ? `ใช้อยู่ ${n}` : '';
+}
+
+/* ---------- render ---------- */
+const ICON_WARN = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
+const ICON_INFO = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+
+function packageText(p, name) {
+  return `${name || 'ยา'} ${fmt(p.pkgAmount)} ${p.pkgUnit}${isPos(p.pkgVolume) ? '/' + fmt(p.pkgVolume) + ' ml' : ''}`;
+}
+
+function recalc() {
+  const p = readParams();
+  const form = $('#pkgForm').value, unit = p.pkgUnit;
+  const name = $('#drugName').value.trim();
+  syncChips();
+  syncAdvancedBadge(p);
+  $('#carryHungGroup').hidden = !(isPos(p.carryVolume) && isPos(p.maxHang));
+  $('#headerDrug').textContent = name ? packageText(p, name) : 'นับจำนวน amp ยาหยดต่อ 1 order';
+
+  // Hint under the mix row.
+  const hint = $('#mixHint');
+  if (isPos(p.pkgAmount) && isPos(p.mixAmount)) {
+    const mixDrug = p.mixUnit === 'cont' ? p.mixAmount * p.pkgAmount : p.mixAmount;
+    const per = mixDrug / p.pkgAmount;
+    const vol = isPos(p.pkgVolume) ? ` ดูดยา ${fmt(per * p.pkgVolume)} ml` : '';
+    hint.innerHTML = p.mixUnit === 'cont'
+      ? `= ยา <b>${fmt(mixDrug)} ${esc(unit)}</b> ต่อถุง${vol}`
+      : `= <b>${fmt(per)} ${esc(form)}</b> ต่อถุง${vol}`;
+  } else hint.textContent = '';
+
+  const r = computeDrip(p);
+  $('#rateCalc').innerHTML = r.ok ? `= อัตรา <b>${fmt(r.rate)} ml/hr</b>` : 'กรอกยาต่อหลอด สูตรผสม และขนาดยาให้ครบ จะแปลงเป็น ml/hr ให้';
+
+  if (!r.ok) {
+    $('#resultMain').hidden = true;
+    $('#noteCard').hidden = true;
+    $('#scheduleCard').hidden = true;
+    const empty = $('#resultEmpty');
+    empty.hidden = false;
+    empty.innerHTML = `<b>ยังคำนวณไม่ได้</b>ยังขาด: ${r.missing.map(esc).join(', ')}`;
+    lastHero = '';
+    return;
+  }
+
+  $('#resultEmpty').hidden = true;
+  $('#resultMain').hidden = false;
+
+  // Hero
+  const heroKey = `${r.containers}|${form}|${r.bags}`;
+  $('#heroLabel').textContent = `ต้องใช้ใน ${fmt(p.hours)} ชม.`;
+  $('#heroCount').textContent = r.containers;
+  $('#heroForm').textContent = form;
+  $('#heroDrug').textContent = packageText(p, name);
+  let sub;
+  if (!r.bags) sub = 'ถุงที่แขวนอยู่พอถึงครบเวลา ไม่ต้องผสมเพิ่ม';
+  else if (p.multiDose) sub = `ผสม ${r.bags} ถุง ใช้ยารวม ${fmt(r.bags * r.contPerBagExact)} ${form} (ใช้ส่วนเหลือต่อ)`;
+  else sub = `ผสม ${r.bags} ถุง ถุงละ ${r.contPerBag} ${form}`;
+  $('#heroSub').textContent = sub;
+  if (lastHero && heroKey !== lastHero) {
+    const hero = $('#hero');
+    hero.classList.remove('flash'); void hero.offsetWidth; hero.classList.add('flash');
+  }
+  lastHero = heroKey;
+
+  // Stats
+  const c = concText(r.conc, unit);
+  $('#statConc').textContent = c.v;
+  $('#statConcUnit').textContent = c.u;
+  $('#statBagTime').textContent = fmtDuration(r.emptyHours);
+  $('#statBagVol').textContent = `ถุง ${fmt(r.bagVolume)} ml`;
+  $('#statTotalVol').textContent = fmt(r.totalVolume);
+  $('#statTotalVolUnit').textContent = `ml ใน ${fmt(p.hours)} ชม.`;
+  $('#statInfused').textContent = fmt(r.drugInfused);
+  $('#statInfusedUnit').textContent = `${unit} (${fmt(r.drugInfusedCont)} ${form})`;
+
+  const ordered = p.rateMode === 'dose'
+    ? `สั่ง ${fmt(p.doseValue)} ${p.doseUnit}${parseDoseUnit(p.doseUnit).perKg ? ` (น้ำหนัก ${fmt(p.weight)} kg)` : ''} เท่ากับ `
+    : '';
+  $('#doseLine').textContent = `${ordered}อัตรา ${fmt(r.rate)} ml/hr ได้ยา ${doseText(r.dosePerHour, unit, p.weight)}`;
+
+  // Alerts
+  const alerts = [];
+  const add = (type, html) => alerts.push(`<li class="alert ${type}">${type === 'warn' ? ICON_WARN : ICON_INFO}<span>${html}</span></li>`);
+  const partial = Math.abs(r.contPerBagExact - Math.round(r.contPerBagExact)) > 1e-6;
+  if (partial && r.bags) {
+    if (p.multiDose) add('info', `ถุงละใช้ ${fmt(r.contPerBagExact)} ${esc(form)} คิดแบบใช้ยาที่เหลือในหลอดที่เปิดแล้วต่อ`);
+    else add('warn', `ถุงละใช้ ${fmt(r.contPerBagExact)} ${esc(form)} ต้องเปิด ${r.contPerBag} ${esc(form)} ส่วนที่เหลือถุงละ ${fmt(r.contPerBag - r.contPerBagExact)} ${esc(form)} ทิ้ง ถ้าเก็บใช้ต่อได้ (multi-dose vial) จะใช้ ${r.containersIfReuse} ${esc(form)} เปิดได้ที่ตัวเลือกเพิ่มเติม`);
+  }
+  if (r.carry) {
+    const then = r.bags ? ' แล้วจึงเริ่มถุงใหม่' : ' พอถึงครบเวลา';
+    const hungHint = isPos(p.maxHang) && !r.carryHung ? ' (นับเวลาเปลี่ยนถุงจากเวลาเริ่ม ถ้าถุงเดิมแขวนมาก่อน ใส่ชั่วโมงในช่อง ถุงเดิมแขวนมาแล้ว)' : '';
+    add('info', r.carryHangLimited
+      ? `ถุงที่แขวนอยู่ ${fmt(r.carry)} ml ต้องเปลี่ยนภายใน ${fmtDuration(r.carryHours)} ตามเวลาเปลี่ยนถุง ทิ้งยาที่เหลือประมาณ ${fmt(r.carry - r.rate * r.carryHours)} ml${then}${hungHint}`
+      : `ถุงที่แขวนอยู่ ${fmt(r.carry)} ml หยดได้อีก ${fmtDuration(r.carryHours)}${then}${hungHint}`);
+  }
+  if (r.hangLimited) {
+    add('info', `เปลี่ยนถุงทุก ${fmtDuration(r.bagHours)} ก่อนยาหมด ทิ้งยาที่เหลือถุงละประมาณ ${fmt(r.discardPerBag)} ml`);
+  } else if (r.emptyHours > 24 && !isPos(p.maxHang)) {
+    add('info', `1 ถุงหยดได้นานกว่า 24 ชม. ตรวจความคงตัวของยาหลังผสม ถ้าต้องเปลี่ยนถุงก่อนหมด ใส่เวลาที่ตัวเลือกเพิ่มเติม`);
+  }
+  if (r.leftoverEnd > 0) {
+    const hang = isPos(p.maxHang);
+    const runFor = Math.min(r.leftoverEnd / r.rate, hang ? Math.max(0, p.maxHang - r.leftoverHung) : Infinity);
+    add('info', `ครบ ${fmt(p.hours)} ชม. ถุงสุดท้ายยังเหลือ <b>${fmt(r.leftoverEnd)} ml</b> (หยดต่อได้อีก ${fmtDuration(runFor)}${hang ? `, แขวนมาแล้ว ${fmtDuration(r.leftoverHung)}` : ''}) ถ้าคิดรอบถัดไป ใส่ ${fmt(r.leftoverEnd)} ในช่อง ถุงที่แขวนอยู่ยังเหลือ${hang ? ` และ ${fmt(r.leftoverHung)} ในช่อง ถุงเดิมแขวนมาแล้ว` : ''}`);
+  }
+  $('#alerts').innerHTML = alerts.join('');
+
+  // Note and schedule
+  const start = getStart();
+  renderNote(buildNoteText(p, r, { name, form, diluent: $('#diluent').value.trim(), start }));
+  $('#noteCard').hidden = false;
+  renderSchedule(p, r, form, start);
+}
+
+// The copy button sends currentNote exactly; the preview turns leading spaces into hanging indents.
+let currentNote = '';
+function renderNote(text) {
+  currentNote = text;
+  $('#noteText').innerHTML = text.split('\n').map(line => {
+    const m = line.match(/^( *)(- )?(.*)$/);
+    const indent = m[1].length, bullet = m[2] ? 2 : 0;
+    // Preview only: keep a number on the same line as its unit ("20:00 น.", "6 พ.ย.", "4 mg").
+    const body = esc((m[2] || '') + m[3])
+      .replace(/(\d) (?=น\.|[ก-๙]{1,2}\.[ก-๙]{1,2}\.|ml|mg|mcg|g\/|mEq|mmol|unit|IU|amp|vial|ถุง|ชม\.|นาที)/g, '$1 ');
+    return `<div class="nl" style="padding-left:${indent + bullet}ch;text-indent:-${bullet}ch">${body}</div>`;
+  }).join('');
+}
+
+function renderSchedule(p, r, form, start) {
+  const card = $('#scheduleCard');
+  if (!r.schedule.length) { card.hidden = true; return; }
+  card.hidden = false;
+  const when = h => start
+    ? `<span class="t">${fmtClock(addHours(start, h))}</span><span class="d">${fmtDay(addHours(start, h))}</span>`
+    : `<span class="t">${fmtRel(h)}</span>`;
+  const perBag = p.multiDose ? `ยา ${fmt(r.mixDrug)} ${esc(p.pkgUnit)}` : `${r.contPerBag} ${esc(form)}`;
+  $('#scheduleBody').innerHTML = r.schedule.map((b, i) => {
+    const last = i === r.schedule.length - 1;
+    const tag = b.endsBy === 'empty' ? '<span class="tag empty">หมดถุง</span>'
+      : b.endsBy === 'hang' ? '<span class="tag hang">ครบเวลาเปลี่ยนถุง</span>'
+      : `<span class="tag end">ครบเวลา เหลือ ${fmt(b.left)} ml</span>`;
+    return `<tr class="${b.carry ? 'carry' : ''}${last ? ' last' : ''}">
+      <td><span class="bag-no">${b.carry ? 'เดิม' : b.no}</span></td>
+      <td>${when(b.start)}</td>
+      <td>${when(b.end)}${tag}</td>
+      <td><span class="t">${fmt(b.used)} ml</span><span class="d">${b.carry ? 'ถุงที่แขวนอยู่' : perBag}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ---------- actions ---------- */
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch { /* try the old way */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy'); ta.remove();
+    return ok;
+  } catch { return false; }
+}
+
+async function onCopy() {
+  const ok = await copyText(currentNote);
+  const btn = $('#btnCopy'), label = $('#btnCopyText');
+  if (ok) {
+    btn.classList.add('done'); label.textContent = 'คัดลอกแล้ว';
+  } else {
+    const range = document.createRange(); range.selectNodeContents($('#noteText'));
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    label.textContent = 'เลือกข้อความแล้ว กดคัดลอกเอง';
+  }
+  setTimeout(() => { btn.classList.remove('done'); label.textContent = 'คัดลอก'; }, 2200);
+}
+
+function runExample(scroll = true) {
+  const i = drugList.findIndex(d => /norepinephrine/i.test(d.name) && d.unit === 'mg' && d.amount === 4);
+  if (i >= 0) {
+    $('#drugSelect').value = String(i);
+    applyDrug(drugList[i]);
+  } else {
+    $('#drugSelect').value = 'custom';
+    applyDrug({ name: 'Norepinephrine', amount: 4, unit: 'mg', volume: 4, form: 'amp' });
+  }
+  $('#mixAmount').value = '8'; $('#mixUnit').value = 'drug'; $('#mixVolume').value = '500';
+  setRateMode('mlhr');
+  $('#rate').value = '30'; $('#hours').value = '24';
+  recalc();
+  if (scroll) $('#resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetAll() {
+  $('#drugSelect').value = '';
+  clearDrugFields();
+  ['#rate', '#doseValue', '#weight', '#carryVolume', '#carryHung', '#maxHang'].forEach(id => { $(id).value = ''; });
+  $('#hours').value = '24';
+  $('#includeDrugVol').checked = false;
+  $('#multiDose').checked = false;
+  setRateMode('mlhr');
+  setStartNow();
+  recalc();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- start ---------- */
+function init() {
+  const pu = $('#pkgUnit');
+  PKG_UNITS.forEach(u => pu.add(new Option(u, u)));
+  pu.value = 'mg';
+
+  const cached = SHEET_ID ? loadCachedList() : null;
+  if (cached) {
+    drugList = cached.list;
+    listInfo = { source: 'cache', time: cached.time ? new Date(cached.time) : null, skipped: 0 };
+  } else {
+    drugList = STARTER_DRUGS.map(d => ({ volume: null, mixAmount: null, mixVolume: null, diluent: '', note: '', ...d }));
+  }
+  renderDrugOptions();
+  setListStatus(cached ? 'fail' : 'starter');
+
+  if (SHEET_ID) {
+    const link = $('#linkSheet');
+    link.href = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+    link.hidden = false;
+  }
+
+  syncUnits();
+  setStartNow();
+
+  $('#drugSelect').addEventListener('change', e => {
+    const v = e.target.value;
+    if (v === 'custom') { clearDrugFields(); e.target.value = 'custom'; $('#drugName').focus(); }
+    else if (v === '') clearDrugFields();
+    else applyDrug(drugList[+v]);
+    recalc();
+  });
+
+  // Editing a package field by hand turns the menu into "custom" so it never shows the wrong item.
+  ['#drugName', '#pkgAmount', '#pkgVolume'].forEach(id => $(id).addEventListener('input', () => {
+    const sel = $('#drugSelect');
+    if (sel.value !== '' && sel.value !== 'custom') sel.value = 'custom';
+    recalc();
+  }));
+  ['#pkgUnit', '#pkgForm'].forEach(id => $(id).addEventListener('change', () => {
+    const sel = $('#drugSelect');
+    if (sel.value !== '' && sel.value !== 'custom') sel.value = 'custom';
+    syncUnits(); recalc();
+  }));
+
+  ['#mixAmount', '#mixVolume', '#rate', '#doseValue', '#weight', '#hours', '#carryVolume', '#carryHung', '#maxHang', '#diluent']
+    .forEach(id => $(id).addEventListener('input', recalc));
+  ['#mixUnit', '#doseUnit', '#includeDrugVol', '#multiDose', '#startDate', '#startTime']
+    .forEach(id => $(id).addEventListener('change', recalc));
+
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => { setRateMode(b.dataset.mode); recalc(); }));
+  document.querySelectorAll('#hourChips .chip').forEach(c => c.addEventListener('click', () => { $('#hours').value = c.dataset.h; recalc(); }));
+
+  $('#btnExample').addEventListener('click', () => runExample());
+  $('#btnReset').addEventListener('click', resetAll);
+  $('#btnCopy').addEventListener('click', onCopy);
+  $('#btnReload').addEventListener('click', refreshList);
+
+  recalc();
+  if (new URLSearchParams(location.search).has('example')) runExample(false);
+  refreshList();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
