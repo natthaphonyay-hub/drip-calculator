@@ -892,7 +892,7 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.6 | November 2026</div>
+        <div class="footer-info-version">Version 1.7 | November 2026</div>
       </div>
     </div>
     <div class="footer-divider">
@@ -2245,7 +2245,9 @@ function buildProblemText(p, r, found, o) {
     const src = (L.src || []).map(k => SOURCES[k] && SOURCES[k].t).filter(Boolean).join(', ');
     const low = a.side === 'low';
     const lim = `${low ? 'อย่างน้อย' : 'ไม่เกิน'} ${fmt(a.limit)} ${uu}`;
-    lines.push(`    - A: ${subj} ${fmt(a.value)} ${uu} ${a.side === 'max' ? 'เกินค่าสูงสุด' : low ? 'ต่ำกว่าที่กำหนด' : 'สูงกว่าที่แนะนำ'} (${src}: ${lim})`);
+    const why = low ? L.lowNote : L.note;
+    lines.push(`    - B: ${src}: ${subj} ${lim}${L.ctx ? ` (${L.ctx})` : ''}${why ? ` ${why.replace(/^ฉลาก: /, '')}` : ''}`);
+    lines.push(`        - A: ${subj} ${fmt(a.value)} ${uu} ${a.side === 'max' ? 'เกินค่าสูงสุด' : low ? 'ต่ำกว่าที่กำหนด' : 'สูงกว่าที่แนะนำ'}`);
     let rec;
     if (L.kind === 'rate' && a.seg === 'load') rec = `ให้ loading นานอย่างน้อย ${fmt(Math.ceil(a.value / a.limit * r.loading.hours * 60))} นาที`;
     else if (L.kind === 'loadMin') rec = `ให้ loading นานอย่างน้อย ${fmt(a.limit)} นาที`;
