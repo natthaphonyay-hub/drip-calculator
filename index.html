@@ -1024,7 +1024,7 @@
       </div>
     </div>
     <div class="footer-divider">
-      © 2026 Drip Calculator | ใช้ประมาณการจำนวนยาที่ต้องเตรียมและเบิกจ่ายเท่านั้น ค่าตั้งต้นของยาแต่ละตัวมาจากเอกสารที่ระบุไว้ ตรวจกับคำสั่งใช้ยาและแนวทาง HAD ของโรงพยาบาลทุกครั้ง<br>เว็บนี้นับจำนวนการเข้าใช้และเก็บค่าที่ใช้คำนวณแบบไม่ระบุตัวตน เพื่อปรับปรุงเครื่องมือ ห้ามกรอกชื่อหรือ HN ผู้ป่วย
+      © 2026 Drip Calculator | ใช้ประมาณการจำนวนยาที่ต้องเตรียมและเบิกจ่ายเท่านั้น ค่าตั้งต้นของยาแต่ละตัวมาจากเอกสารที่ระบุไว้ ตรวจกับคำสั่งใช้ยาและแนวทาง HAD ของโรงพยาบาลทุกครั้ง<span id="logNotice" hidden><br>เว็บนี้นับจำนวนการเข้าใช้และเก็บค่าที่ใช้คำนวณแบบไม่ระบุตัวตน เพื่อปรับปรุงเครื่องมือ ห้ามกรอกชื่อหรือ HN ผู้ป่วย</span>
     </div>
   </div>
 </footer>
@@ -1787,6 +1787,8 @@ function logSend(kind, data) {
   } catch { /* never block the page */ }
 }
 function logVisit() {
+  // the footer tells people about the log only once the log is really on
+  if (logOn()) { const n = document.getElementById('logNotice'); if (n) n.hidden = false; }
   let ref = 'เปิดตรง';
   try { ref = window.self !== window.top ? 'ฝังใน Sites' : (document.referrer ? new URL(document.referrer).hostname : 'เปิดตรง'); } catch { ref = 'ฝังใน Sites'; }
   logSend('visit', { tool: 'drip', w: window.innerWidth, ref });
