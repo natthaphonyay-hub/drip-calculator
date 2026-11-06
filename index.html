@@ -892,7 +892,7 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.7 | November 2026</div>
+        <div class="footer-info-version">Version 1.8 | November 2026</div>
       </div>
     </div>
     <div class="footer-divider">
@@ -2226,6 +2226,102 @@ function noteHtml(text) {
   }).join('');
 }
 
+/* One corrected order for the R line: keep the doctor's order and change only what failed, to values that pass every
+   red and yellow rule (label standard values first, e.g. the loading time). Checked again with checkLimits before use.
+   A draft for the pharmacist, who adjusts it at the bedside. Returns the order text, or '' when no passing order is found. */
+function suggestFix(p, r, o) {
+  const d = state.custom ? null : state.drug;
+  const rules = d ? LIMITS[d.id] : null;
+  if (!rules) return '';
+  const w = isPos(p.weight) ? p.weight : null, u = p.pkgUnit;
+  const use = L => !(L.noWeight && w) && !((L.perKg || L.unit.split('/').includes('kg')) && !w);
+  const live = rules.filter(use);
+  const q = { ...p };
+  const bad = (pp, rr) => checkLimits(rules, pp, rr).filter(a => a.level === 'danger' || a.level === 'warn');
+  const perHourOf = (v, unit) => { const parts = unit.split('/'); let x = convertAmount(v, parts[0], u); if (parts.includes('kg')) x *= w;
+    const per = parts[parts.length - 1]; return per === 'min' ? x * 60 : per === '24hr' ? x / 24 : x; };
+  // 1. concentration: a listed mix of this drug that passes, else a standard bag size
+  const concRules = live.filter(L => L.kind === 'conc');
+  const concOk = c => concRules.every(L => { const v = shown(concIn(c, u, L.unit)); const top = L.high != null ? L.high : L.max;
+    return !(top != null && v > shown(top)) && !(L.low != null && v < shown(L.low)); });
+  if (concRules.length && !concOk(r.conc)) {
+    const mixes = (d.mixes || []).filter(m => m.v > 0).map(m => { const drug = m.unit === 'cont' ? m.a * p.pkgAmount : m.a;
+      const vol = m.v + (m.addDrugVol && isPos(p.pkgVolume) ? drug / p.pkgAmount * p.pkgVolume : 0); return { m, drug, c: drug / vol }; });
+    const ok = mixes.filter(x => concOk(x.c)).sort((a, b) => Math.abs(a.drug - r.mixDrug) - Math.abs(b.drug - r.mixDrug))[0];
+    if (ok) Object.assign(q, { mixAmount: ok.m.a, mixUnit: ok.m.unit === 'cont' ? 'cont' : 'drug', mixVolume: ok.m.v, includeDrugVolume: !!ok.m.addDrugVol });
+    else {
+      const vol = [50, 100, 250, 500, 1000, 2000].find(v => concOk(r.mixDrug / v));
+      if (!vol || r.undiluted) return '';
+      Object.assign(q, { mixAmount: r.mixDrug, mixUnit: 'drug', mixVolume: vol, includeDrugVolume: false });
+    }
+  }
+  // 2. loading: amount, then time (label time first, else the shortest that passes)
+  if (p.loadOn && r.loading) {
+    for (const L of live.filter(L => L.kind === 'load')) {
+      const top = L.high != null ? L.high : L.max;
+      const amt = convertAmount(r.loading.drug, u, L.unit) / (L.perKg ? w : 1);
+      if (top != null && shown(amt) > shown(top)) Object.assign(q, { loadAmount: top, loadUnit: L.unit, loadPerKg: !!L.perKg });
+    }
+    let mins = nonNeg(q.loadMinutes);
+    const r2 = computeDrip(q);
+    const loadDrug = r2.ok && r2.loading ? r2.loading.drug : r.loading.drug;
+    for (const L of live) {
+      if (L.kind === 'loadMin' && L.low != null && shown(mins) < shown(L.low)) mins = L.low;
+      if (L.kind === 'rate' && L.max != null) { const need = convertAmount(loadDrug, u, L.unit.split('/')[0]) / L.max; if (mins < need) mins = Math.ceil(need); }
+    }
+    const std = d.loading && d.loading.minutes;
+    if (mins !== nonNeg(q.loadMinutes) && std && std > mins) mins = std;
+    q.loadMinutes = mins;
+  }
+  // 3. drip dose: highest per-hour drug allowed by every dose, speed and 24-hour rule (the recommended top when there is one)
+  const rq = computeDrip(q);
+  if (!rq.ok) return '';
+  let cap = Infinity, floor = 0;
+  for (const L of live) {
+    if (L.kind === 'dose' || L.kind === 'rate') {
+      const top = L.kind === 'dose' && L.high != null && !L.highLevel ? L.high : L.max;
+      if (top != null) cap = Math.min(cap, perHourOf(top, L.unit));
+      if (L.kind === 'dose' && L.low != null && L.lowLevel === 'warn') floor = Math.max(floor, perHourOf(L.low, L.unit));
+    }
+    if (L.kind === 'day') {
+      const top = L.high != null ? L.high : L.max;
+      const extra = rq.drugFirst24 - (rq.dosePerHour2 != null ? 0 : rq.dosePerHour * Math.max(0, 24 - rq.maintStart));
+      if (rq.dosePerHour2 == null) cap = Math.min(cap, (convertAmount(top, L.unit, u) - extra) / Math.max(1e-9, 24 - rq.maintStart));
+    }
+  }
+  // ml/hr rounded down (0.1 ml/hr steps, 0.01 below 1) so the dose stays inside the limit
+  const mlhr = ph => { const x = ph / rq.conc; return x >= 1 ? Math.floor(x * 10 + 1e-9) / 10 : Math.floor(x * 100 + 1e-9) / 100; };
+  const fixRate = ph => (ph > cap * (1 + 1e-9) ? mlhr(cap) : ph < floor ? Math.ceil(floor / rq.conc * 10) / 10 : null);
+  const keep = ph => Number((ph / rq.conc).toFixed(2));
+  // the dose the doctor meant (from the original order), carried to the new bag
+  const r1 = fixRate(r.dosePerHour), r2b = r.dosePerHour2 != null ? fixRate(r.dosePerHour2) : null;
+  Object.assign(q, { rateMode: 'mlhr', rate: r1 != null ? r1 : keep(r.dosePerHour) });
+  if (p.step2On) q.step2Value = r2b != null ? r2b : keep(r.dosePerHour2);
+  // with a rate change the 24-hour rule is met by scaling both steps down together
+  for (const L of live.filter(L => L.kind === 'day')) {
+    const rt = computeDrip(q); if (!rt.ok) return '';
+    const top = convertAmount(L.high != null ? L.high : L.max, L.unit, u);
+    const loadPart = rt.loading && !(rt.loading.mode === 'same' && rt.loading.hours > 0) ? rt.loading.drug : 0;
+    if (rt.drugFirst24 > top && rt.drugFirst24 > loadPart) {
+      const k = (top - loadPart) / (rt.drugFirst24 - loadPart);
+      if (k <= 0) return '';
+      const down = x => (x >= 1 ? Math.floor(x * k * 10) / 10 : Math.floor(x * k * 100) / 100);
+      q.rate = down(q.rate); if (p.step2On) q.step2Value = down(q.step2Value);
+    }
+  }
+  // 4. check the corrected order
+  const rf = computeDrip(q);
+  if (!rf.ok || rf.rate <= 0 || bad(q, rf).length) return '';
+  const unitTxt = p.rateMode === 'dose' ? p.doseUnit : d.orderUnit;
+  const doseOf = ph => (unitTxt ? `${fmt(rateIn(ph, u, unitTxt, w))} ${unitTxt} = ` : '');
+  const mix = rf.undiluted ? `${fmt(rf.mixDrug)} ${u}` : `${fmt(rf.mixDrug)} ${u} in ${o.diluent ? o.diluent + ' ' : ''}${fmt(q.mixVolume)} ml`;
+  let t = `${o.name} ${mix} IV drip ${doseOf(rf.dosePerHour)}${fmt(rf.rate)} ml/hr`;
+  if (rf.loading) t += `, loading ${fmt(rf.loading.drug)} ${u} ${rf.loading.hours > 0 ? `ใน ${fmt(rf.loading.hours * 60)} นาที` : 'IV push'}`;
+  if (p.step2On) t += `, หลัง ${fmt(p.step2After)} ชม. ปรับเป็น ${doseOf(rf.dosePerHour2)}${fmt(rf.rate2)} ml/hr`;
+  if (live.some(L => L.kind === 'day')) t += ` (รวม 24 ชม. ${fmt(rf.drugFirst24)} ${u})`;
+  return t;
+}
+
 /* Short SBAR note for the doctor, only for red or yellow warnings. Plain text (ASCII and Thai) like the main note. */
 function buildProblemText(p, r, found, o) {
   const probs = found.filter(a => (a.level === 'danger' || a.level === 'warn') && a.rule && a.value !== null);
@@ -2248,15 +2344,9 @@ function buildProblemText(p, r, found, o) {
     const why = low ? L.lowNote : L.note;
     lines.push(`    - B: ${src}: ${subj} ${lim}${L.ctx ? ` (${L.ctx})` : ''}${why ? ` ${why.replace(/^ฉลาก: /, '')}` : ''}`);
     lines.push(`        - A: ${subj} ${fmt(a.value)} ${uu} ${a.side === 'max' ? 'เกินค่าสูงสุด' : low ? 'ต่ำกว่าที่กำหนด' : 'สูงกว่าที่แนะนำ'}`);
-    let rec;
-    if (L.kind === 'rate' && a.seg === 'load') rec = `ให้ loading นานอย่างน้อย ${fmt(Math.ceil(a.value / a.limit * r.loading.hours * 60))} นาที`;
-    else if (L.kind === 'loadMin') rec = `ให้ loading นานอย่างน้อย ${fmt(a.limit)} นาที`;
-    else if (L.kind === 'conc') rec = low ? `ผสมให้เข้มข้นอย่างน้อย ${fmt(a.limit)} ${uu}` : `ผสมให้เจือจางลง ไม่เกิน ${fmt(a.limit)} ${uu}`;
-    else if (L.kind === 'day') rec = `ลดขนาดยาให้รวม 24 ชม. ไม่เกิน ${fmt(a.limit)} ${uu}`;
-    else if (L.kind === 'load') rec = `ปรับ loading ไม่เกิน ${fmt(a.limit)} ${uu}`;
-    else rec = low ? `ปรับขนาดยาเป็นอย่างน้อย ${fmt(a.limit)} ${uu}` : `ปรับขนาดยาไม่เกิน ${fmt(a.limit)} ${uu}`;
-    lines.push(`        - R: แนะนำ${rec}`);
   });
+  const fix = suggestFix(p, r, o);
+  lines.push(`    - R: ${fix ? `แนะนำปรับเป็น ${fix}` : 'แอปหาค่าที่ผ่านทุกเกณฑ์ไม่ได้ ปรึกษาแพทย์เพื่อปรับคำสั่ง'}`);
   lines.push('    - เรียนแพทย์พิจารณา');
   return lines.join('\n');
 }
