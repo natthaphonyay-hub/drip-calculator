@@ -1019,7 +1019,7 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.10 | November 2026</div>
+        <div class="footer-info-version">Version 1.11 | November 2026</div>
         <div class="footer-info-version" style="opacity:1;margin-top:6px"><a href="manual/" style="color:inherit;font-weight:700">คู่มือการใช้</a></div>
       </div>
     </div>
@@ -1766,12 +1766,15 @@ let lastFound = [];
 /* ---------- usage log (anonymous) ----------
    Sends page visits and the numbers used in a calculation to the DoseLogic Google Sheet
    (Apps Script code: 0 Inbox/DoseLogic-หน้าแรก/apps-script-เก็บข้อมูล/Code.gs in the owner's PARA).
-   Never sends patient name, HN or bed. Off on file://, in automated browsers and while LOG_URL is empty.
+   Never sends patient name, HN or bed. Off on file://, in headless or automated browsers (manual screenshots, tests) and with ?nolog in the address.
    Any failure is ignored so the calculator always works. */
-const LOG_URL = '';
-const LOG_VER = '1.10';
+const LOG_URL = 'https://script.google.com/macros/s/AKfycbyelczLFGoo5j3icdHnCxg07gW3FbS3s95XX7grzbulcAfHgzEh0SByhl44W-89bs580A/exec';
+const LOG_VER = '1.11';
 var logTimer = 0, logLastKey = '', logSnap = null, logExampleAt = 0, logUserAt = 0;
-function logOn() { return !!LOG_URL && location.protocol === 'https:' && !navigator.webdriver; }
+function logOn() {
+  return !!LOG_URL && location.protocol === 'https:' && !navigator.webdriver
+    && !/HeadlessChrome/.test(navigator.userAgent) && !/[?&]nolog\b/.test(location.search);
+}
 function logDevice() {
   try {
     let id = localStorage.getItem('dl-dev');
