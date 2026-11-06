@@ -439,6 +439,8 @@
   .limit-alerts .alert.warn { background: #facc15; border: 2px solid #ca8a04; color: #422006; }
   .limit-alerts .alert.info { background: #0ea5e9; border: 2px solid #0284c7; color: #fff; }
   .limit-alerts .alert { font-size: 15px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
+  .problem-card .card-header { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-bottom: 2px solid #fca5a5; }
+  .problem-card .card-title-icon { background: #dc2626; }
   .alert .lim-sub { display: block; font-size: 12.5px; margin-top: 4px; }
   .limits-note { font-size: 12.5px; color: var(--text-2); margin: -4px 2px 12px; }
 
@@ -816,6 +818,23 @@
   </section>
 
   <!-- 4. Pharmacist Note -->
+  <section class="card note-card problem-card" id="problemCard" aria-labelledby="t-problem" hidden>
+    <div class="card-header">
+      <div class="card-title" id="t-problem">
+        <span class="card-title-icon" aria-hidden="true">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </span>
+        ปัญหาจากการใช้ยา (SBAR)
+      </div>
+      <button class="btn-copy" id="btnCopyProblem" type="button">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        <span id="btnCopyProblemText">คัดลอก</span>
+      </button>
+    </div>
+    <div class="note-content" id="problemText"></div>
+    <div class="note-hint">ขึ้นเฉพาะเมื่อมีคำเตือนสีแดงหรือเหลือง ไว้แจ้งแพทย์ ตรวจข้อความก่อนส่งทุกครั้ง</div>
+  </section>
+
   <section class="card note-card" id="noteCard" aria-labelledby="t-note" hidden>
     <div class="card-header">
       <div class="card-title" id="t-note">
@@ -873,7 +892,7 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.5 | November 2026</div>
+        <div class="footer-info-version">Version 1.6 | November 2026</div>
       </div>
     </div>
     <div class="footer-divider">
@@ -1613,6 +1632,8 @@ const state = {
 };
 let lastHero = '';
 let currentNote = '';
+let currentProblem = '';
+let lastFound = [];
 
 const drugPkgText = d => `${fmt(d.amount)} ${d.unit}/${fmt(d.volume)} ml`;
 const hay = d => `${d.name} ${d.alias || ''} ${drugPkgText(d)}`.toLowerCase();
@@ -2022,6 +2043,7 @@ function limitMessage(a, word) {
 function renderLimits(p, r, word) {
   const d = state.custom ? null : state.drug;
   const found = checkLimits(d ? LIMITS[d.id] : null, p, r);
+  lastFound = found;
   $('#limitAlerts').innerHTML = found.map(a => `<li class="alert ${a.level}" data-rule="${esc(a.id)}" data-seg="${a.seg}" data-level="${a.level}">`
     + `${a.level === 'info' ? ICON_INFO : ICON_WARN}<span>${limitMessage(a, word)}</span></li>`).join('');
   const note = state.custom ? 'ยาที่กรอกเองไม่มีเกณฑ์เตือนขนาดยา ตรวจกับแนวทางของ รพ.'
@@ -2093,6 +2115,7 @@ function recalc() {
   if (!r.ok) {
     $('#resultMain').hidden = true;
     $('#noteCard').hidden = true;
+    $('#problemCard').hidden = true;
     $('#scheduleCard').hidden = true;
     const empty = $('#resultEmpty');
     empty.hidden = false;
@@ -2180,13 +2203,20 @@ function recalc() {
   const start = getStart();
   renderNote(buildNoteText(p, r, { name, form, diluent: diluentLabel(), start, orderUnit: state.drug && state.drug.orderUnit }));
   $('#noteCard').hidden = false;
+  currentProblem = buildProblemText(p, r, lastFound, { name, form, diluent: diluentLabel(), word });
+  $('#problemCard').hidden = !currentProblem;
+  if (currentProblem) $('#problemText').innerHTML = noteHtml(currentProblem);
   renderSchedule(p, r, form, start, word);
 }
 
 // The copy button sends currentNote exactly; the preview turns leading spaces into hanging indents.
 function renderNote(text) {
   currentNote = text;
-  $('#noteText').innerHTML = text.split('\n').map(line => {
+  $('#noteText').innerHTML = noteHtml(text);
+}
+
+function noteHtml(text) {
+  return text.split('\n').map(line => {
     const m = line.match(/^( *)(- )?(.*)$/);
     const indent = m[1].length, bullet = m[2] ? 2 : 0;
     // Preview only: keep a number on the same line as its unit ("20:00 น.", "6 พ.ย.", "4 mg").
@@ -2194,6 +2224,39 @@ function renderNote(text) {
       .replace(/(\d) (?=น\.|[ก-๙]{1,2}\.[ก-๙]{1,2}\.|ml|mg|mcg|g\/|mEq|mmol|unit|IU|mU|amp|vial|ถุง|ไซริงจ์|ชม\.|นาที)/g, '$1 ');
     return `<div class="nl" style="padding-left:${indent + bullet}ch;text-indent:-${bullet}ch">${body}</div>`;
   }).join('');
+}
+
+/* Short SBAR note for the doctor, only for red or yellow warnings. Plain text (ASCII and Thai) like the main note. */
+function buildProblemText(p, r, found, o) {
+  const probs = found.filter(a => (a.level === 'danger' || a.level === 'warn') && a.rule && a.value !== null);
+  if (!probs.length) return '';
+  const u = p.pkgUnit;
+  const unitOf = L => (L.kind === 'load' && L.perKg ? `${L.unit}/kg` : L.unit.replace('/24hr', '/24 ชม.'));
+  const mix = `${fmt(r.mixDrug)} ${u}${r.undiluted ? '' : ` in ${o.diluent ? o.diluent + ' ' : ''}${fmt(p.mixVolume)} ml`}`;
+  const rate = p.rateMode === 'dose' ? `${fmt(p.doseValue)} ${p.doseUnit} (${fmt(r.rate)} ml/hr)` : `${fmt(r.rate)} ml/hr`;
+  const load = r.loading ? `, loading ${fmt(r.loading.drug)} ${u} ${r.loading.hours > 0 ? `ใน ${fmt(r.loading.hours * 60)} นาที` : 'IV push'}` : '';
+  const step = p.step2On ? `, หลัง ${fmt(p.step2After)} ชม. ปรับเป็น ${p.rateMode === 'dose' ? `${fmt(p.step2Value)} ${p.doseUnit}` : `${fmt(r.rate2)} ml/hr`}` : '';
+  const what = { main: 'ขนาดยาที่หยด', step2: 'ขนาดยาหลังเปลี่ยนอัตรา', load: 'loading', bag: 'ความเข้มข้นใน' + o.word, day: 'ยารวมใน 24 ชม.', order: 'ระยะเวลาที่สั่ง' };
+  const lines = ['ปัญหาจากการใช้ยา (Pharmacist note)'];
+  lines.push(`    - S: ${isPos(p.weight) ? `ผู้ป่วยน้ำหนัก ${fmt(p.weight)} kg ` : ''}แพทย์สั่ง ${o.name} ${mix} IV drip ${rate}${load}${step}`);
+  probs.forEach(a => {
+    const L = a.rule, uu = unitOf(L);
+    const subj = L.kind === 'rate' ? (a.seg === 'load' ? 'ความเร็วให้ loading' : 'ความเร็วให้ยา') : L.kind === 'loadMin' ? 'เวลาให้ loading' : what[a.seg] || 'ขนาดยา';
+    const src = (L.src || []).map(k => SOURCES[k] && SOURCES[k].t).filter(Boolean).join(', ');
+    const low = a.side === 'low';
+    const lim = `${low ? 'อย่างน้อย' : 'ไม่เกิน'} ${fmt(a.limit)} ${uu}`;
+    lines.push(`    - A: ${subj} ${fmt(a.value)} ${uu} ${a.side === 'max' ? 'เกินค่าสูงสุด' : low ? 'ต่ำกว่าที่กำหนด' : 'สูงกว่าที่แนะนำ'} (${src}: ${lim})`);
+    let rec;
+    if (L.kind === 'rate' && a.seg === 'load') rec = `ให้ loading นานอย่างน้อย ${fmt(Math.ceil(a.value / a.limit * r.loading.hours * 60))} นาที`;
+    else if (L.kind === 'loadMin') rec = `ให้ loading นานอย่างน้อย ${fmt(a.limit)} นาที`;
+    else if (L.kind === 'conc') rec = low ? `ผสมให้เข้มข้นอย่างน้อย ${fmt(a.limit)} ${uu}` : `ผสมให้เจือจางลง ไม่เกิน ${fmt(a.limit)} ${uu}`;
+    else if (L.kind === 'day') rec = `ลดขนาดยาให้รวม 24 ชม. ไม่เกิน ${fmt(a.limit)} ${uu}`;
+    else if (L.kind === 'load') rec = `ปรับ loading ไม่เกิน ${fmt(a.limit)} ${uu}`;
+    else rec = low ? `ปรับขนาดยาเป็นอย่างน้อย ${fmt(a.limit)} ${uu}` : `ปรับขนาดยาไม่เกิน ${fmt(a.limit)} ${uu}`;
+    lines.push(`        - R: แนะนำ${rec}`);
+  });
+  lines.push('    - เรียนแพทย์พิจารณา');
+  return lines.join('\n');
 }
 
 function renderSchedule(p, r, form, start, word) {
@@ -2341,6 +2404,11 @@ function init() {
   $('#btnExample').addEventListener('click', () => runExample());
   $('#btnReset').addEventListener('click', resetAll);
   $('#btnCopy').addEventListener('click', onCopy);
+  $('#btnCopyProblem').addEventListener('click', async () => {
+    const ok = await copyText(currentProblem), label = $('#btnCopyProblemText');
+    label.textContent = ok ? 'คัดลอกแล้ว' : 'คัดลอกไม่ได้ เลือกข้อความเอง';
+    setTimeout(() => { label.textContent = 'คัดลอก'; }, 2200);
+  });
 
   recalc();
   if (new URLSearchParams(location.search).has('example')) runExample(false);
