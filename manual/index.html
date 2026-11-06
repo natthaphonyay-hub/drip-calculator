@@ -27,8 +27,9 @@
   .tip { background: #fefce8; border-left: 3px solid #ca8a04; padding: 2mm 3mm; border-radius: 0 2mm 2mm 0; margin-top: 2mm; font-size: 10pt; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
   .step { border: 1px solid #e2e8f0; border-radius: 3mm; padding: 3mm; break-inside: avoid; }
-  .step img { margin-top: 2mm; max-height: 92mm; object-fit: cover; object-position: left top; }
+  .step img { margin-top: 2mm; max-height: 92mm; object-fit: contain; object-position: left top; }
   .case img { max-height: 46mm; object-fit: cover; object-position: left top; }
+  .case img.full { object-position: left bottom; }
   .big { font-size: 13pt; font-weight: 700; color: #15803d; }
   .cover-top { display: grid; grid-template-columns: 1fr 42mm; gap: 6mm; align-items: center; margin-bottom: 6mm; }
   #qr img, #qr canvas { width: 38mm !important; height: 38mm !important; border: 0; }
@@ -71,7 +72,7 @@
       <p class="lead">เครื่องมือนับจำนวน amp ยาหยดต่อ 1 order สำหรับเภสัชกร พร้อมข้อความ Pharmacist note และคำเตือนขนาดยา</p>
       <p class="link"><a href="https://natthaphonyay-hub.github.io/drip-calculator/">เปิดแอป: https://natthaphonyay-hub.github.io/drip-calculator/</a></p>
       <p class="link screen-only"><a href="drip-calculator-manual.pdf">ดาวน์โหลดเป็น PDF</a></p>
-      <p class="foot">ฉบับ 6 พฤศจิกายน 2569 (แอปเวอร์ชัน 1.9) ใช้ได้ทั้งมือถือและคอมพิวเตอร์ ไม่ต้องติดตั้ง ไม่ต้องสมัคร</p>
+      <p class="foot">ฉบับ 6 พฤศจิกายน 2569 (แอปเวอร์ชัน 1.10) ใช้ได้ทั้งมือถือและคอมพิวเตอร์ ไม่ต้องติดตั้ง ไม่ต้องสมัคร</p>
     </div>
     <div id="qr"></div>
   </div>
@@ -331,7 +332,7 @@
     <h3>4 พบปัญหาแล้วแจ้งแพทย์</h3>
     <p>KCl ผสม 10 mEq ใน 100 ml หยด 150 ml/hr</p>
     <p><b>ผล:</b> คำเตือนเหลือง 3 ข้อ และ note SBAR แนะนำ KCl 40 mEq in NSS 1,000 ml หยด 8.33 mEq/hr = 212.5 ml/hr</p></div></div>
-  <div class="case"><img src="img/s18-custom.png" alt=""><div>
+  <div class="case"><img class="full" src="img/s18-custom.png" alt=""><div>
     <h3>5 ยาที่ไม่มีในรายการ</h3>
     <p>พิมพ์ชื่อยา แตะ "อื่นๆ (กรอกเอง)" กรอกขนาดบรรจุ สูตรผสม และอัตรา แอปนับ amp ทำตารางและ note ให้เหมือนยาในรายการ</p></div></div>
   <div class="warnbox"><b>ข้อควรรู้</b> แอปเป็นเครื่องมือช่วยคำนวณและร่าง note ค่าเตือนอิงฉลากยาและ HAD สำหรับผู้ใหญ่ ตรวจกับคำสั่งแพทย์ ขนาดบรรจุของ รพ. และแนวทางของ รพ. ทุกครั้ง</div>
