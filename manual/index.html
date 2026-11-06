@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือการใช้ Drip Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @page { size: A4; margin: 14mm 14mm 14mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'IBM Plex Sans Thai', sans-serif; color: #0f172a; font-size: 10.5pt; line-height: 1.55; margin: 0; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  h1 { font-size: 26pt; color: #0e7490; margin: 0 0 2mm; line-height: 1.2; }
+  h2 { font-size: 16pt; color: #0e7490; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 2px solid #a5f3fc; }
+  h3 { font-size: 11.5pt; margin: 0 0 1.5mm; color: #155e75; }
+  p { margin: 0 0 2mm; }
+  .lead { font-size: 11.5pt; color: #334155; }
+  .row { display: grid; grid-template-columns: 74mm 1fr; gap: 7mm; align-items: start; margin-bottom: 6mm; break-inside: avoid; }
+  .row.narrow { grid-template-columns: 64mm 1fr; }
+  img { width: 100%; border: 1px solid #cbd5e1; border-radius: 3mm; display: block; }
+  .n { display: inline-flex; width: 5.4mm; height: 5.4mm; border-radius: 50%; background: #e11d48; color: #fff; font-weight: 700; font-size: 8.5pt; align-items: center; justify-content: center; margin-right: 1.5mm; vertical-align: 1px; }
+  ul { margin: 0 0 2mm; padding-left: 5mm; }
+  li { margin-bottom: 1mm; }
+  .why { background: #ecfeff; border-left: 3px solid #0891b2; padding: 2mm 3mm; border-radius: 0 2mm 2mm 0; margin-top: 2mm; font-size: 10pt; }
+  .tip { background: #fefce8; border-left: 3px solid #ca8a04; padding: 2mm 3mm; border-radius: 0 2mm 2mm 0; margin-top: 2mm; font-size: 10pt; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .step { border: 1px solid #e2e8f0; border-radius: 3mm; padding: 3mm; break-inside: avoid; }
+  .step img { margin-top: 2mm; max-height: 92mm; object-fit: cover; object-position: left top; }
+  .case img { max-height: 46mm; object-fit: cover; object-position: left top; }
+  .big { font-size: 13pt; font-weight: 700; color: #0e7490; }
+  .cover-top { display: grid; grid-template-columns: 1fr 42mm; gap: 6mm; align-items: center; margin-bottom: 6mm; }
+  #qr img, #qr canvas { width: 38mm !important; height: 38mm !important; border: 0; }
+  .link { font-size: 9.5pt; color: #0e7490; word-break: break-all; }
+  .features { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin: 4mm 0 6mm; }
+  .feature { border: 1px solid #a5f3fc; background: #f0fdff; border-radius: 3mm; padding: 2.5mm 3mm; }
+  .feature b { color: #0e7490; }
+  .swatch { display: inline-block; width: 4mm; height: 4mm; border-radius: 1mm; vertical-align: -0.5mm; margin-right: 1.5mm; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; }
+  td, th { border: 1px solid #cbd5e1; padding: 1.8mm 2.5mm; vertical-align: top; text-align: left; }
+  th { background: #ecfeff; }
+  .case { display: grid; grid-template-columns: 58mm 1fr; gap: 5mm; margin-bottom: 3.5mm; break-inside: avoid; align-items: start; }
+  .foot { font-size: 8.5pt; color: #64748b; margin-top: 4mm; }
+  .warnbox { border: 2px solid #dc2626; border-radius: 3mm; padding: 3mm 4mm; margin-top: 5mm; }
+
+  a { color: #0e7490; }
+  .toc { margin: 0 0 5mm; font-size: 10.5pt; line-height: 2; }
+  .toc a { display: inline-block; margin: 0 2mm 0 0; padding: 0 3mm; border: 1px solid #a5f3fc; border-radius: 99px; text-decoration: none; background: #f0fdff; }
+  @media screen {
+    html { background: #e2e8f0; }
+    body { max-width: 210mm; margin: 0 auto; background: #fff; }
+    .page { padding: 12mm 12mm 6mm; border-bottom: 6px solid #e2e8f0; }
+    .back { position: fixed; right: 12px; bottom: 12px; background: #0e7490; color: #fff; padding: 8px 14px; border-radius: 99px; text-decoration: none; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  }
+  @media screen and (max-width: 640px) {
+    .row, .row.narrow, .case, .grid2, .features, .cover-top { grid-template-columns: 1fr; }
+    .page { padding: 16px; }
+  }
+  @media print { .screen-only, .back { display: none; } }
+</style>
+</head>
+<body>
+<a class="back screen-only" href="https://natthaphonyay-hub.github.io/drip-calculator/">เปิดแอป</a>
+
+<!-- 1 ปก -->
+<section class="page">
+  <div class="cover-top">
+    <div>
+      <h1>คู่มือการใช้ Drip Calculator</h1>
+      <p class="lead">เครื่องมือนับจำนวน amp ยาหยดต่อ 1 order สำหรับเภสัชกร พร้อมข้อความ Pharmacist note และคำเตือนขนาดยา</p>
+      <p class="link"><a href="https://natthaphonyay-hub.github.io/drip-calculator/">เปิดแอป: https://natthaphonyay-hub.github.io/drip-calculator/</a></p>
+      <p class="link screen-only"><a href="drip-calculator-manual.pdf">ดาวน์โหลดเป็น PDF</a></p>
+      <p class="foot">ฉบับ 6 พฤศจิกายน 2569 (แอปเวอร์ชัน 1.9) ใช้ได้ทั้งมือถือและคอมพิวเตอร์ ไม่ต้องติดตั้ง ไม่ต้องสมัคร</p>
+    </div>
+    <div id="qr"></div>
+  </div>
+  <nav class="toc screen-only"><b>สารบัญ</b> <a href="#start">เริ่มใช้ใน 4 ขั้น</a> <a href="#drug">ส่วนที่ 1 ยาและขนาดบรรจุ</a> <a href="#mix">ส่วนที่ 2 สารน้ำและสูตรผสม</a> <a href="#rate">ส่วนที่ 3 อัตราการให้และระยะเวลา</a> <a href="#special">ส่วนที่ 4 loading dose เปลี่ยนอัตรา และตัวเลือกเพิ่มเติม</a> <a href="#result">ส่วนที่ 5 อ่านผลการคำนวณ</a> <a href="#warn">ส่วนที่ 6 คำเตือนขนาดยา</a> <a href="#note">ส่วนที่ 7 Note สำหรับวางในระบบ</a> <a href="#cases">ตัวอย่างการใช้ 5 กรณี</a></nav>
+  <h2>แอปทำอะไรได้บ้าง</h2>
+  <div class="features">
+    <div class="feature"><b>นับ amp ที่ต้องเตรียม</b><br>จากสูตรผสม อัตรา และระยะเวลา order คิดถุงทีละถุงตามเวลาจริง</div>
+    <div class="feature"><b>ตารางเปลี่ยนถุง</b><br>ถุงไหนเริ่มและหมดกี่โมง ครบเวลาแล้วเหลือยาเท่าไร</div>
+    <div class="feature"><b>Pharmacist note</b><br>กดคัดลอกไปวางในระบบที่ทุกสหวิชาชีพอ่านได้ทันที</div>
+    <div class="feature"><b>คำเตือนขนาดยา</b><br>เทียบกับฉลากยาและ HAD ขึ้นสีแดง เหลือง ฟ้า</div>
+    <div class="feature"><b>Note แจ้งแพทย์แบบ SBAR</b><br>เมื่อพบปัญหา มีร่างคำสั่งที่แนะนำให้ปรับ</div>
+    <div class="feature"><b>loading และเปลี่ยนอัตรา</b><br>รวมถึงยาที่ไม่อยู่ในรายการ กรอกขนาดบรรจุเองได้</div>
+  </div>
+  <div class="row narrow">
+    <img src="img/s01-home.png" alt="หน้าแรกของแอป">
+    <div>
+      <h3>มียาตั้งต้น 22 รายการ</h3>
+      <p>Norepinephrine, Adrenaline, Dopamine, Dobutamine, Vasopressin, KCl, MgSO4 (50% และ 10%), Calcium gluconate, NaHCO3, Heparin, Regular insulin, Nicardipine (2 ขนาด), NTG, Amiodarone, Morphine, Fentanyl, Midazolam, Propofol, Dexmedetomidine, Oxytocin</p>
+      <p>ทุกค่าตั้งต้นมีแหล่งอ้างอิง ค่าที่ยังไม่มีเอกสารยืนยันจะเป็นสีเทาพร้อมคำว่า "ยังไม่ยืนยัน"</p>
+      <div class="tip">ปุ่ม "ลองตัวอย่าง" มุมขวาบนจะใส่ order ตัวอย่างให้ดูผลทันที ปุ่มลูกศรวนบนแถบหัวใช้ล้างค่าทั้งหมด</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 เริ่มใช้ 4 ขั้น -->
+<section class="page">
+  <h2 id="start">เริ่มใช้ใน 4 ขั้น</h2>
+  <p class="lead">ตัวอย่าง: Norepinephrine 4 mg/4 ml ผสม 8 mg ใน D5W 500 ml หยด 30 ml/hr นาน 24 ชม.</p>
+  <div class="grid2">
+    <div class="step"><span class="big">1 ค้นหายา</span><br>พิมพ์ชื่อยา 2 ถึง 3 ตัวอักษร แล้วแตะชื่อยาในรายการ<img src="img/s02-search.png"></div>
+    <div class="step"><span class="big">2 เลือกสารน้ำและสูตรผสม</span><br>แตะสารน้ำ แล้วแตะสูตร 8 mg : 500 ml<img src="img/s04-dil-mix.png"></div>
+    <div class="step"><span class="big">3 ใส่อัตรา</span><br>ใส่ 30 ในช่อง ml/hr ระยะเวลาตั้งไว้ 24 ชม.<img src="img/s06-rate.png"></div>
+    <div class="step"><span class="big">4 อ่านผล</span><br>ต้องใช้ 4 amp (2 ถุง ถุงละ 2 amp) แล้วกดคัดลอก note<img src="img/s11-result.png"></div>
+  </div>
+</section>
+
+<!-- 3 เลือกยา -->
+<section class="page">
+  <h2 id="drug">ส่วนที่ 1 ยาและขนาดบรรจุ</h2>
+  <div class="row">
+    <img src="img/s02-search.png" alt="">
+    <div>
+      <h3><span class="n">1</span>ช่องค้นหา</h3>
+      <p>พิมพ์ชื่อสามัญ ชื่อการค้า หรือชื่อย่อก็ได้ เช่น nor, levophed, kcl, mgso4 แล้วแตะชื่อยา หรือกดลูกศรลงแล้ว Enter</p>
+      <div class="why">ใช้เพื่อดึงขนาดบรรจุ สารน้ำที่ผสมได้ และสูตรผสมของยานั้นมาใส่ให้อัตโนมัติ</div>
+    </div>
+  </div>
+  <div class="row">
+    <img src="img/s03-drugcard.png" alt="">
+    <div>
+      <h3><span class="n">1</span>ป้ายสถานะ</h3>
+      <ul>
+        <li><span class="swatch" style="background:#dcfce7;border:1px solid #166534"></span>เขียว "ขนาดบรรจุมีที่มา" ตรวจกับเอกสารแล้ว</li>
+        <li><span class="swatch" style="background:#e2e8f0;border:1px solid #334155"></span>เทา "บางค่ายังไม่ยืนยัน" ควรเทียบกับยาของ รพ. ก่อนใช้</li>
+      </ul>
+      <h3><span class="n">2</span>แก้ขนาดบรรจุ</h3>
+      <p>ถ้ายาของ รพ. ขนาดไม่ตรง แตะ "แก้ขนาดบรรจุ" แล้วแก้ยาต่อ 1 หลอด ปริมาตรต่อหลอด และชนิดบรรจุ (amp หรือ vial)</p>
+      <div class="why">จำนวน amp ทุกตัวเลขคิดจากขนาดบรรจุนี้ ต้องตรงกับยาที่จ่ายจริง</div>
+    </div>
+  </div>
+  <div class="row">
+    <img src="img/s18-custom.png" alt="">
+    <div>
+      <h3>ยาที่ไม่มีในรายการ: แตะ "อื่นๆ (กรอกเอง)"</h3>
+      <p>พิมพ์ชื่อยาแล้วแตะบรรทัด "อื่นๆ" ท้ายรายการ แล้วกรอก</p>
+      <ul>
+        <li><span class="n">1</span>ยาต่อ 1 หลอด และหน่วย เช่น 1 g</li>
+        <li><span class="n">2</span>ปริมาตรต่อหลอด เช่น 10 ml</li>
+      </ul>
+      <div class="tip">ยาที่กรอกเองแสดงสารน้ำทุกชนิดและไม่มีเกณฑ์เตือนขนาดยา ตรวจความเข้ากันได้กับแนวทางของ รพ. เอง</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 สารน้ำและสูตร -->
+<section class="page">
+  <h2 id="mix">ส่วนที่ 2 สารน้ำและสูตรผสม</h2>
+  <div class="row">
+    <img src="img/s04-dil-mix.png" alt="">
+    <div>
+      <h3><span class="n">1</span>สารน้ำที่ใช้ผสม</h3>
+      <p>แสดงเฉพาะสารน้ำที่ฉลากหรือ HAD ระบุว่าผสมได้ แตะเลือก 1 ตัว ใต้ปุ่มมีเหตุผลและลิงก์แหล่งอ้างอิง</p>
+      <p>สีบนปุ่มตรงกับขวดจริง: D5<b style="color:#ca8a04">W</b> ตัว W สีเหลือง, D5<b style="color:#9333ea">S</b> ตัว S สีม่วง</p>
+      <h3><span class="n">2</span>สูตรผสมสำเร็จรูป</h3>
+      <p>แตะสูตรที่แพทย์สั่ง ตัวเลขบรรทัดล่างคือความเข้มข้นที่ได้</p>
+      <h3><span class="n">3</span>กรอกสูตรเอง</h3>
+      <p>ถ้าไม่มีสูตรตรง แก้ตัวเลขในช่อง ยา : สารละลาย ได้เลย ช่องยาเลือกหน่วยได้ทั้งหน่วยยา (mg, mEq, unit) หรือเป็นจำนวนหลอด</p>
+      <div class="why">บรรทัด "= 2 amp ต่อถุง ดูดยา 8 ml" บอกวิธีเตรียมยาต่อถุงทันที</div>
+    </div>
+  </div>
+  <div class="row">
+    <img src="img/s05-gray.png" alt="">
+    <div>
+      <h3>สูตรสีเทา = ยังไม่ยืนยัน</h3>
+      <p>สูตรที่มาจากตารางทั่วไปและยังไม่มีเอกสารยืนยันจะเป็นปุ่มสีเทาพร้อมคำว่า "ยังไม่ยืนยัน" ใช้คำนวณได้ แต่ควรเทียบกับ HAD ของ รพ.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 อัตราและเวลา -->
+<section class="page">
+  <h2 id="rate">ส่วนที่ 3 อัตราการให้และระยะเวลา</h2>
+  <div class="row">
+    <img src="img/s06-rate.png" alt="">
+    <div>
+      <h3><span class="n">1</span>เลือกวิธีสั่ง</h3>
+      <p><b>ml/hr</b> เมื่อ order เขียนเป็นอัตราหยด หรือ <b>ขนาดยา</b> เมื่อ order เขียนเป็น mcg/kg/min, mg/hr, unit/hr ฯลฯ</p>
+      <h3><span class="n">2</span>ช่องอัตรา</h3>
+      <p>ใส่ตัวเลขตาม order เช่น 30</p>
+      <h3><span class="n">3</span>น้ำหนักผู้ป่วย</h3>
+      <p>ต้องใส่เมื่อสั่งเป็นต่อ kg และควรใส่ทุกครั้งที่รู้ เพราะใช้ตรวจขนาดยาเทียบช่วงที่แนะนำ</p>
+    </div>
+  </div>
+  <div class="row">
+    <img src="img/s07-rate-dose.png" alt="">
+    <div>
+      <h3>สั่งเป็นขนาดยา</h3>
+      <p><span class="n">1</span>ใส่ขนาดยาและเลือกหน่วยให้ตรง order เช่น Dopamine 5 mcg/kg/min น้ำหนัก 60 kg</p>
+      <p><span class="n">2</span>แอปแปลงเป็น ml/hr ให้ทันที ใช้ตั้งเครื่องหยดได้</p>
+    </div>
+  </div>
+  <div class="row">
+    <img src="img/s08-time.png" alt="">
+    <div>
+      <h3><span class="n">1</span>ระยะเวลา order</h3>
+      <p>จำนวนชั่วโมงที่ต้องเตรียมยา ตั้งไว้ 24 ชม.</p>
+      <h3><span class="n">2</span>ปุ่มลัด</h3>
+      <p>แตะ 12, 24, 48, 72 ชม. ได้เลย</p>
+      <h3><span class="n">3</span>วันและเวลาเริ่ม</h3>
+      <p>ใส่เพื่อให้ตารางเปลี่ยนถุงและ note บอกเป็นวันที่และเวลาจริง</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ส่วนพิเศษ -->
+<section class="page">
+  <h2 id="special">ส่วนที่ 4 loading dose เปลี่ยนอัตรา และตัวเลือกเพิ่มเติม</h2>
+  <div class="row narrow">
+    <img src="img/s09-special.png" alt="">
+    <div>
+      <h3><span class="n">1</span>ใส่สูตรตามแหล่งอ้างอิง</h3>
+      <p>มีในยาที่มีสูตรมาตรฐาน เช่น Amiodarone กดครั้งเดียวได้ loading 150 mg ใน 10 นาที, 1 mg/min นาน 6 ชม. แล้วลดเป็น 0.5 mg/min</p>
+      <h3><span class="n">2</span>มี loading dose</h3>
+      <p>ติ๊กเมื่อ order มี loading แล้วกรอกขนาด (ติ๊ก "ต่อ kg" ถ้าสั่งเป็นต่อ kg) เลือกวิธีให้</p>
+      <ul>
+        <li><b>ผสมแยก</b>: ใส่ปริมาตรที่ผสม และเวลาให้ ถ้าเวลาเป็น 0 คือ IV push</li>
+        <li><b>จากถุงเดียวกัน</b>: ดึงจากถุงหยด แอปบอกว่าต้องดึงกี่ ml</li>
+      </ul>
+      <h3><span class="n">3</span>เปลี่ยนอัตราระหว่างให้</h3>
+      <p>ใส่ว่าหลังเริ่มหยดกี่ชั่วโมง และเปลี่ยนเป็นเท่าไร</p>
+      <div class="why">loading ที่ผสมแยกนับ amp แยกให้ด้วย และการเปลี่ยนอัตราทำให้นับถุงตรงกับเวลาจริง</div>
+    </div>
+  </div>
+  <div class="row narrow">
+    <img src="img/s10-advanced.png" alt="">
+    <div>
+      <h3>ตัวเลือกเพิ่มเติม (แตะเพื่อเปิด)</h3>
+      <p><span class="n">1</span><b>ถุงที่แขวนอยู่ยังเหลือ</b> ใช้ตอนคิดรอบถัดไป ถุงเดิมจะหยดต่อจนหมดก่อน แล้วค่อยเริ่มถุงใหม่</p>
+      <p><span class="n">2</span><b>เปลี่ยนถุงทุกไม่เกิน</b> ใส่ตามความคงตัวของยาหลังผสม แอปจะทิ้งยาที่เหลือและเปิดถุงใหม่</p>
+      <p><span class="n">3</span><b>multi-dose vial</b> ติ๊กเมื่อยาที่เหลือในหลอดใช้ผสมถุงถัดไปได้ เช่น insulin จะไม่ปัดหลอดขึ้นทุกถุง</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 อ่านผล -->
+<section class="page">
+  <h2 id="result">ส่วนที่ 5 อ่านผลการคำนวณ</h2>
+  <div class="row">
+    <img src="img/s11-result.png" alt="">
+    <div>
+      <h3><span class="n">1</span>จำนวนที่ต้องเตรียม</h3>
+      <p>ตัวเลขใหญ่คือ amp หรือ vial ทั้งหมดใน order บรรทัดล่างบอกว่าผสมกี่ถุง ถุงละกี่ amp</p>
+      <h3><span class="n">2</span>4 ช่องสรุป</h3>
+      <ul>
+        <li><b>ความเข้มข้น</b> ของยาในถุง</li>
+        <li><b>1 ถุงหยดได้</b> นานเท่าไร</li>
+        <li><b>ปริมาตรจากถุง</b> ที่ผู้ป่วยได้รับใน order</li>
+        <li><b>ยาที่ได้รับจริง</b> รวมทั้ง order</li>
+      </ul>
+      <h3><span class="n">3</span>บรรทัดขนาดยา</h3>
+      <p>อัตรา ml/hr และขนาดยาที่ได้ในหน่วยที่ใช้บ่อย ไว้เทียบกับ order</p>
+    </div>
+  </div>
+  <div class="row">
+    <img src="img/s12-schedule.png" alt="">
+    <div>
+      <h3>ตารางเปลี่ยนถุง</h3>
+      <p>ถุงแต่ละถุงเริ่มและหมดเมื่อไร ป้ายบอกว่าหมดถุง ครบเวลาเปลี่ยนถุง หรือครบเวลา order แล้วยังเหลือเท่าไร</p>
+      <div class="why">ใช้วางแผนเวลาผสมยาและส่งยาขึ้นหอผู้ป่วย และใช้ตอบพยาบาลว่าถุงต่อไปต้องมาเมื่อไร</div>
+      <div class="tip">ถ้าครบเวลาแล้วถุงยังเหลือ แอปบอกตัวเลขให้ใส่ในช่อง "ถุงที่แขวนอยู่ยังเหลือ" ตอนคิดรอบถัดไป</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 คำเตือน -->
+<section class="page">
+  <h2 id="warn">ส่วนที่ 6 คำเตือนขนาดยา</h2>
+  <p>คำเตือนขึ้นเหนือจำนวน amp ทันทีที่ขนาดยา ความเร็ว ความเข้มข้น ยารวมต่อวัน หรือ loading ไม่อยู่ในช่วงที่ฉลากยาหรือ HAD ระบุ ทุกคำเตือนมีลิงก์ที่มา</p>
+  <table style="margin-bottom:5mm">
+    <tr><th style="width:24mm">สี</th><th>ความหมาย</th><th style="width:62mm">ตัวอย่าง</th></tr>
+    <tr><td><span class="swatch" style="background:#dc2626"></span>แดง</td><td>เกินค่าสูงสุดที่แหล่งอ้างอิงเขียนไว้</td><td>Dopamine 60 mcg/kg/min (สูงสุด 50)</td></tr>
+    <tr><td><span class="swatch" style="background:#facc15"></span>เหลือง</td><td>สูงกว่าที่แนะนำ หรือผิดเงื่อนไขที่ฉลากกำหนด</td><td>KCl 15 mEq/hr (แนะนำไม่เกิน 10)</td></tr>
+    <tr><td><span class="swatch" style="background:#0ea5e9"></span>ฟ้า</td><td>ต่ำกว่าที่แนะนำ อาจพิมพ์ผิด หรือขอข้อมูลเพิ่ม เช่นให้ใส่น้ำหนัก</td><td>Norepinephrine 0.267 mcg/min</td></tr>
+  </table>
+  <div class="grid2">
+    <div><img src="img/s13-red.png" alt=""><p class="foot">แดง: Dopamine 1:1 สั่ง 60 mcg/kg/min น้ำหนัก 60 kg</p>
+      <img src="img/s15-blue.png" alt="" style="margin-top:3mm"><p class="foot">ฟ้า: Norepinephrine 4 mg : 250 ml หยด 1 ml/hr ไม่ใส่น้ำหนัก</p></div>
+    <div><img src="img/s14-yellow.png" alt=""><p class="foot">เหลือง: KCl 10 mEq : 100 ml หยด 150 ml/hr</p></div>
+  </div>
+  <div class="tip">ค่าที่ตรงเกณฑ์พอดีไม่เตือน เกณฑ์เป็นของผู้ใหญ่ เกณฑ์แบบต่อ kg ต้องใส่น้ำหนัก Morphine และ Fentanyl ฉลากไม่ได้ให้ขนาดหยดต่อเนื่อง จึงไม่มีเกณฑ์ (แอปเขียนบอกไว้) ตารางเกณฑ์ทั้งหมดพร้อมลิงก์แหล่งอ้างอิง: <a href="https://github.com/natthaphonyay-hub/drip-calculator/blob/main/docs/เกณฑ์เตือนขนาดยา.md">เกณฑ์เตือนขนาดยา</a></div>
+</section>
+
+<!-- 9 Note -->
+<section class="page">
+  <h2 id="note">ส่วนที่ 7 Note สำหรับวางในระบบ</h2>
+  <div class="row">
+    <img src="img/s16-problem.png" alt="">
+    <div>
+      <h3>Note แจ้งแพทย์แบบ SBAR (ขึ้นเฉพาะเมื่อมีคำเตือนแดงหรือเหลือง)</h3>
+      <ul>
+        <li><b>S</b> order ปัจจุบัน และน้ำหนักถ้าใส่ไว้</li>
+        <li><b>B</b> สิ่งที่ฉลากหรือ HAD กำหนด</li>
+        <li><b>A</b> ปัญหาที่พบ</li>
+        <li><b>R</b> คำสั่งที่แนะนำให้ปรับ 1 บรรทัด แอปแก้เฉพาะจุดที่มีปัญหาและตรวจซ้ำแล้วว่าผ่านเกณฑ์</li>
+      </ul>
+      <p><span class="n">1</span>กดคัดลอก แล้ววางในระบบหรือส่งแพทย์</p>
+      <div class="warnbox">R เป็นร่างช่วยงานเภสัช เภสัชกรหน้างานต้องตรวจและปรับตามผู้ป่วยก่อนส่งทุกครั้ง</div>
+    </div>
+  </div>
+  <div class="row">
+    <img src="img/s17-note.png" alt="">
+    <div>
+      <h3>Pharmacist note</h3>
+      <p>สรุป order วิธีผสม ความเข้มข้น ขนาดยาที่ได้ จำนวน amp ที่เตรียม เวลาเปลี่ยนถุง และยาที่ได้รับรวม</p>
+      <p><span class="n">1</span>กดคัดลอก แล้ววางในระบบที่ทุกสหวิชาชีพอ่านได้เลย</p>
+      <div class="why">ข้อความเป็นตัวหนังสือธรรมดา ย่อหน้าด้วยเว้นวรรค วางที่ไหนก็ไม่เพี้ยน</div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 กรณีตัวอย่าง -->
+<section class="page">
+  <h2 id="cases">ตัวอย่างการใช้ 5 กรณี</h2>
+  <div class="case"><img src="img/s11-result.png" alt=""><div>
+    <h3>1 นับยาหยดทั่วไป</h3>
+    <p>Norepinephrine 4 mg/4 ml ผสม 8 mg ใน D5W 500 ml หยด 30 ml/hr 24 ชม.</p>
+    <p><b>ผล:</b> 4 amp (2 ถุง ถุงละ 2 amp) ครบ 24 ชม. ถุงที่ 2 เหลือ 280 ml</p></div></div>
+  <div class="case"><img src="img/s20-amio-hero.png" alt=""><div>
+    <h3>2 ยาที่มี loading และลดอัตรา</h3>
+    <p>Amiodarone: เลือกยา แล้วกด "ใส่สูตรตามแหล่งอ้างอิง"</p>
+    <p><b>ผล:</b> 7 amp แยกเป็น loading 1 amp และหยดต่อเนื่อง 6 amp</p></div></div>
+  <div class="case"><img src="img/s19-carry-hero.png" alt=""><div>
+    <h3>3 คิดรอบถัดไปเมื่อถุงเดิมยังเหลือ</h3>
+    <p>Norepinephrine สูตรเดิม หยด 30 ml/hr เปิดตัวเลือกเพิ่มเติม ใส่ถุงที่แขวนอยู่ยังเหลือ 280 ml</p>
+    <p><b>ผล:</b> ถุงเดิมหยดต่อก่อน แล้วจึงเริ่มถุงใหม่ จำนวน amp รอบนี้ลดลงตามจริง</p></div></div>
+  <div class="case"><img src="img/s21-kcl-problem.png" alt=""><div>
+    <h3>4 พบปัญหาแล้วแจ้งแพทย์</h3>
+    <p>KCl ผสม 10 mEq ใน 100 ml หยด 150 ml/hr</p>
+    <p><b>ผล:</b> คำเตือนเหลือง 3 ข้อ และ note SBAR แนะนำ KCl 40 mEq in NSS 1,000 ml หยด 8.33 mEq/hr = 212.5 ml/hr</p></div></div>
+  <div class="case"><img src="img/s18-custom.png" alt=""><div>
+    <h3>5 ยาที่ไม่มีในรายการ</h3>
+    <p>พิมพ์ชื่อยา แตะ "อื่นๆ (กรอกเอง)" กรอกขนาดบรรจุ สูตรผสม และอัตรา แอปนับ amp ทำตารางและ note ให้เหมือนยาในรายการ</p></div></div>
+  <div class="warnbox"><b>ข้อควรรู้</b> แอปเป็นเครื่องมือช่วยคำนวณและร่าง note ค่าเตือนอิงฉลากยาและ HAD สำหรับผู้ใหญ่ ตรวจกับคำสั่งแพทย์ ขนาดบรรจุของ รพ. และแนวทางของ รพ. ทุกครั้ง</div>
+</section>
+
+<script>
+  new QRCode(document.getElementById('qr'), { text: 'https://natthaphonyay-hub.github.io/drip-calculator/', width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M });
+</script>
+</body>
+</html>
