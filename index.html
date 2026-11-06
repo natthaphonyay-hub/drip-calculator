@@ -15,7 +15,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%A7%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --primary: #16a34a;
@@ -512,6 +512,97 @@
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
   @keyframes flash { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); } 100% { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+  /* =====================================================================
+     DoseLogic label theme (theme 3, owner's pick 2026-11-06).
+     Spec: 0 Inbox/DoseLogic-หน้าแรก/00-ธีมฉลากยา-DoseLogic.md in the owner's PARA.
+     Flat label look: dark thin frames, near-square corners, no soft shadows or gradients.
+     Colours that carry meaning (warnings, rate box, loading, bottle letters) keep their hue.
+     ===================================================================== */
+  :root {
+    --ink: #1d2420; --ink-2: #4d5a52; --rule: #9aa79e; --paper: #eef1ee; --label: #fbfcfa;
+    --primary: #15803d; --primary-dark: #166534; --primary-deep: #14532d;
+    --primary-soft: #ecf5ee; --primary-line: #a7cdb1;
+    --bg: var(--paper); --card: var(--label); --field: #ffffff;
+    --text: var(--ink); --text-2: var(--ink-2); --muted: #5f6b63; --border: #c9d1cb;
+    --shadow: none; --shadow-lg: none;
+    --radius: 4px; --radius-sm: 3px; --pill: 3px;
+    --sans: 'Sarabun', 'Thonburi', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'Sarabun', ui-monospace, Menlo, monospace;
+  }
+  body { font-family: var(--sans); background: var(--paper); }
+  body::before { display: none; }
+  .input-unit.big input::placeholder { font-family: var(--sans); }
+
+  /* header: one solid strip in the tool colour, like the label band on the home page */
+  .header { background: var(--primary); box-shadow: none; border-bottom: 2px solid var(--ink); }
+  .header-icon, .header-btn { border-radius: 3px; }
+  .header-text h1 { font-weight: 800; letter-spacing: 0; }
+
+  /* cards: label frames */
+  .card { border: 1.5px solid var(--ink); box-shadow: none; }
+  .card:hover { box-shadow: none; }
+  .card-header { border-bottom: 1px dashed var(--rule); }
+  .card-title { font-weight: 800; }
+  .card-title-icon { border-radius: 3px; background: var(--ink); }
+
+  /* fields */
+  .form-input, .input-unit { border-width: 1.5px; border-color: var(--rule); }
+  .input-unit .unit-tag, .input-unit select { border-left-width: 1.5px; border-left-color: var(--rule); background-color: #eef1ee; }
+  .form-input:focus, .input-unit:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.18); }
+  .combo-list { border: 1.5px solid var(--ink); }
+  .drug-card { background: var(--primary-soft); border: 1.5px solid var(--primary-line); }
+
+  /* order boxes: same hues as before, flat */
+  .box { border-width: 1.5px; }
+  .box.dil { background: #f3f5f3; border-color: var(--border); }
+  .box.mix, .box.time { background: #ecf5ee; border-color: var(--primary-line); }
+  .box.rate { background: #fef6d8; border-color: #f2d478; }
+  .box.special { background: #f5eefc; border-color: #dcc6f5; }
+  .box.special.has-preset { border-color: #a855f7; box-shadow: none; outline: 2px solid rgba(168, 85, 247, 0.25); outline-offset: 2px; }
+  .seg { box-shadow: none; border: 1px solid var(--border); }
+  .seg button[aria-pressed="true"], .seg.violet button[aria-pressed="true"] { box-shadow: none; }
+  .chip { border-width: 1.5px; border-color: var(--primary-line); color: var(--primary-dark); }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); }
+  .opt-chip { border-width: 1.5px; }
+  .opt-chip[aria-checked="true"], .opt-chip[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .btn-example { border-width: 1.5px; border-color: var(--ink); background: transparent; color: var(--ink); }
+  .btn-example:hover { background: var(--label); transform: translate(-1px, -1px); box-shadow: 2px 2px 0 var(--ink); }
+  .btn-regimen { border-width: 1.5px; }
+  details.advanced { border-width: 1.5px; border-color: var(--rule); }
+
+  /* result */
+  .result-card .card-header { background: var(--primary); border-bottom: 2px solid var(--ink); }
+  .result-card .card-title-icon { background: rgba(255, 255, 255, 0.18); }
+  .result-empty { background: var(--paper); border: 1.5px dashed var(--rule); }
+  .hero { background: var(--label); border: 1.5px solid var(--ink); }
+  .hero-value { color: var(--primary); }
+  .hero-parts span { border-color: var(--primary-line); }
+  .stat { border: 1px solid var(--border); }
+  .dose-line { border-color: var(--primary-line); }
+  .limit-alerts .alert { box-shadow: none; }
+
+  /* note, problem and schedule: flat headers, colour kept in the icon */
+  .note-card .card-header { background: #eef0fb; border-bottom: 1px dashed #a5b0e6; }
+  .note-card .card-title-icon { background: #4f46e5; }
+  .note-content { background: #fbfbfe; }
+  .note-hint { background: #fbfbfe; }
+  .btn-copy { border: 1.5px solid var(--ink); color: var(--ink); }
+  .btn-copy:hover { background: var(--label); }
+  .problem-card .card-header { background: #fdeeee; border-bottom: 1px dashed #f19c9c; }
+  .schedule-card .card-header { background: #edf3fb; border-bottom: 1px dashed #9cbce6; }
+  .schedule-card .card-title-icon { background: #2563eb; }
+  .schedule-table th { background: var(--paper); border-bottom: 1.5px solid var(--ink); }
+  .schedule-table td { border-bottom: 1px dashed var(--rule); }
+  .bag-no { background: var(--primary); box-shadow: none; border-radius: 3px; }
+  tr.carry .bag-no { background: #64748b; }
+  tr.load .bag-no { background: #7c3aed; }
+  tr.last .bag-no { background: #c2410c; }
+
+  /* footer */
+  .footer { background: var(--ink); }
+  .footer-icon { border-radius: 3px; }
+  .footer-info-org { font-family: var(--mono); }
 </style>
 </head>
 <body>
