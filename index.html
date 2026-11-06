@@ -638,19 +638,6 @@
   input, textarea { caret-color: var(--primary); }
   a { text-underline-offset: 3px; }
 
-  /* ---------- computer screens: inputs left, result right and kept in view while scrolling;
-     problem, note and schedule full width below. The result only pins when it fits the screen,
-     so nothing in it can hide below the fold. ---------- */
-  @media (min-width: 1024px) {
-    .header-inner, .footer-inner { max-width: 1200px; }
-    main { max-width: 1240px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; padding: 20px; }
-    main > .card { grid-column: 1 / -1; }
-    main > .card-drug { grid-column: 1; grid-row: 1; }
-    main > [aria-labelledby="t-order"] { grid-column: 1; grid-row: 2; }
-    main > .result-card { grid-column: 2; grid-row: 1 / span 2; }
-    main > .result-card.pin { position: sticky; top: 92px; }
-    .result-card .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
 </style>
 </head>
 <body>
@@ -1833,12 +1820,6 @@ function logQueue(p, r) {
     logSend('drip', Object.assign({ event: 'คำนวณ', example: logExampleAt > logUserAt }, logSnap));
   }, 8000);
 }
-// Computer layout: keep the result card in view while the inputs scroll, but only when the whole card fits on screen.
-function pinResult() {
-  const c = document.getElementById('resultCard');
-  if (!c) return;
-  c.classList.toggle('pin', matchMedia('(min-width: 1024px)').matches && c.offsetHeight <= window.innerHeight - 110);
-}
 function logCancel() { clearTimeout(logTimer); logSnap = null; }
 function logCopy(what) {
   if (logSnap) logSend('drip', Object.assign({ event: what, example: logExampleAt > logUserAt }, logSnap));
@@ -2331,7 +2312,6 @@ function recalc() {
     empty.innerHTML = `<b>ยังคำนวณไม่ได้</b>${state.drug || state.custom ? '' : 'เริ่มจากค้นหายาด้านบน<br>'}ยังขาด: ${r.missing.map(esc).join(', ')}`;
     lastHero = '';
     logCancel();
-    pinResult();
     return;
   }
 
@@ -2419,7 +2399,6 @@ function recalc() {
   if (currentProblem) $('#problemText').innerHTML = noteHtml(currentProblem);
   renderSchedule(p, r, form, start, word);
   logQueue(p, r);
-  pinResult();
 }
 
 // The copy button sends currentNote exactly; the preview turns leading spaces into hanging indents.
@@ -2727,7 +2706,6 @@ function init() {
   logVisit();
   // box widths change on rotate, and digit widths change once the web font arrives
   window.addEventListener('resize', fitInputs);
-  window.addEventListener('resize', pinResult);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitInputs);
 }
 
