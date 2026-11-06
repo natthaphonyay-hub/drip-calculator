@@ -892,7 +892,7 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.8 | November 2026</div>
+        <div class="footer-info-version">Version 1.9 | November 2026</div>
       </div>
     </div>
     <div class="footer-divider">
@@ -2333,7 +2333,7 @@ function buildProblemText(p, r, found, o) {
   const load = r.loading ? `, loading ${fmt(r.loading.drug)} ${u} ${r.loading.hours > 0 ? `ใน ${fmt(r.loading.hours * 60)} นาที` : 'IV push'}` : '';
   const step = p.step2On ? `, หลัง ${fmt(p.step2After)} ชม. ปรับเป็น ${p.rateMode === 'dose' ? `${fmt(p.step2Value)} ${p.doseUnit}` : `${fmt(r.rate2)} ml/hr`}` : '';
   const what = { main: 'ขนาดยาที่หยด', step2: 'ขนาดยาหลังเปลี่ยนอัตรา', load: 'loading', bag: 'ความเข้มข้นใน' + o.word, day: 'ยารวมใน 24 ชม.', order: 'ระยะเวลาที่สั่ง' };
-  const lines = ['ปัญหาจากการใช้ยา (Pharmacist note)'];
+  const lines = ['Pharmacist note'];
   lines.push(`    - S: ${isPos(p.weight) ? `ผู้ป่วยน้ำหนัก ${fmt(p.weight)} kg ` : ''}แพทย์สั่ง ${o.name} ${mix} IV drip ${rate}${load}${step}`);
   probs.forEach(a => {
     const L = a.rule, uu = unitOf(L);
