@@ -893,12 +893,12 @@
       <div class="footer-info">
         <div class="footer-info-label">พัฒนาโดย</div>
         <div class="footer-info-org">DoseLogic</div>
-        <div class="footer-info-version">Version 1.9 | November 2026</div>
+        <div class="footer-info-version">Version 1.10 | November 2026</div>
         <div class="footer-info-version" style="opacity:1;margin-top:6px"><a href="manual/" style="color:inherit;font-weight:700">คู่มือการใช้</a></div>
       </div>
     </div>
     <div class="footer-divider">
-      © 2026 Drip Calculator | ใช้ประมาณการจำนวนยาที่ต้องเตรียมและเบิกจ่ายเท่านั้น ค่าตั้งต้นของยาแต่ละตัวมาจากเอกสารที่ระบุไว้ ตรวจกับคำสั่งใช้ยาและแนวทาง HAD ของโรงพยาบาลทุกครั้ง
+      © 2026 Drip Calculator | ใช้ประมาณการจำนวนยาที่ต้องเตรียมและเบิกจ่ายเท่านั้น ค่าตั้งต้นของยาแต่ละตัวมาจากเอกสารที่ระบุไว้ ตรวจกับคำสั่งใช้ยาและแนวทาง HAD ของโรงพยาบาลทุกครั้ง<br>เว็บนี้นับจำนวนการเข้าใช้และเก็บค่าที่ใช้คำนวณแบบไม่ระบุตัวตน เพื่อปรับปรุงเครื่องมือ ห้ามกรอกชื่อหรือ HN ผู้ป่วย
     </div>
   </div>
 </footer>
@@ -1637,6 +1637,68 @@ let currentNote = '';
 let currentProblem = '';
 let lastFound = [];
 
+/* ---------- usage log (anonymous) ----------
+   Sends page visits and the numbers used in a calculation to the DoseLogic Google Sheet
+   (Apps Script code: 0 Inbox/DoseLogic-หน้าแรก/apps-script-เก็บข้อมูล/Code.gs in the owner's PARA).
+   Never sends patient name, HN or bed. Off on file://, in automated browsers and while LOG_URL is empty.
+   Any failure is ignored so the calculator always works. */
+const LOG_URL = '';
+const LOG_VER = '1.10';
+var logTimer = 0, logLastKey = '', logSnap = null, logExampleAt = 0, logUserAt = 0;
+function logOn() { return !!LOG_URL && location.protocol === 'https:' && !navigator.webdriver; }
+function logDevice() {
+  try {
+    let id = localStorage.getItem('dl-dev');
+    if (!id) { id = Math.random().toString(36).slice(2, 10); localStorage.setItem('dl-dev', id); }
+    return id;
+  } catch { return ''; }
+}
+function logSend(kind, data) {
+  if (!logOn()) return;
+  try {
+    const body = JSON.stringify(Object.assign({ v: 1, kind, dev: logDevice(), ver: LOG_VER }, data));
+    fetch(LOG_URL, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body }).catch(() => {});
+  } catch { /* never block the page */ }
+}
+function logVisit() {
+  let ref = 'เปิดตรง';
+  try { ref = window.self !== window.top ? 'ฝังใน Sites' : (document.referrer ? new URL(document.referrer).hostname : 'เปิดตรง'); } catch { ref = 'ฝังใน Sites'; }
+  logSend('visit', { tool: 'drip', w: window.innerWidth, ref });
+}
+function logSnapshot(p, r) {
+  const n = v => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v * 1000) / 1000 : '');
+  const form = $('#pkgForm').value;
+  const count = lv => lastFound.filter(a => a.level === lv).length;
+  const dose = p.rateMode === 'dose';
+  return {
+    drug: drugName(), custom: state.custom,
+    pkg: `${n(p.pkgAmount)} ${p.pkgUnit}/${n(p.pkgVolume)} ml`,
+    diluent: state.diluent === 'none' ? 'ไม่เจือจาง' : diluentLabel(),
+    mix: `${n(p.mixAmount)} ${p.mixUnit === 'cont' ? form : p.pkgUnit}/${n(p.mixVolume)} ml`,
+    mode: dose ? 'ขนาดยา' : 'ml/hr',
+    rate: n(r.rate), dose: dose ? n(p.doseValue) : '', doseUnit: dose ? p.doseUnit : '', weight: n(p.weight),
+    load: p.loadOn, step2: p.step2On, hours: n(p.hours),
+    count: r.totalContainers, form, bags: r.bags,
+    danger: count('danger'), warn: count('warn'),
+    rules: lastFound.filter(a => a.level !== 'info').map(a => a.id).join(' '),
+  };
+}
+// A calculation is logged once the numbers have stayed the same for 8 seconds, so typing is not logged key by key.
+function logQueue(p, r) {
+  try { logSnap = logSnapshot(p, r); } catch { logSnap = null; return; }
+  clearTimeout(logTimer);
+  logTimer = setTimeout(() => {
+    const key = JSON.stringify(logSnap);
+    if (key === logLastKey) return;
+    logLastKey = key;
+    logSend('drip', Object.assign({ event: 'คำนวณ', example: logExampleAt > logUserAt }, logSnap));
+  }, 8000);
+}
+function logCancel() { clearTimeout(logTimer); logSnap = null; }
+function logCopy(what) {
+  if (logSnap) logSend('drip', Object.assign({ event: what, example: logExampleAt > logUserAt }, logSnap));
+}
+
 const drugPkgText = d => `${fmt(d.amount)} ${d.unit}/${fmt(d.volume)} ml`;
 const hay = d => `${d.name} ${d.alias || ''} ${drugPkgText(d)}`.toLowerCase();
 const isUnverified = keys => (keys || []).some(k => SOURCES[k] && SOURCES[k].unverified);
@@ -2123,6 +2185,7 @@ function recalc() {
     empty.hidden = false;
     empty.innerHTML = `<b>ยังคำนวณไม่ได้</b>${state.drug || state.custom ? '' : 'เริ่มจากค้นหายาด้านบน<br>'}ยังขาด: ${r.missing.map(esc).join(', ')}`;
     lastHero = '';
+    logCancel();
     return;
   }
 
@@ -2209,6 +2272,7 @@ function recalc() {
   $('#problemCard').hidden = !currentProblem;
   if (currentProblem) $('#problemText').innerHTML = noteHtml(currentProblem);
   renderSchedule(p, r, form, start, word);
+  logQueue(p, r);
 }
 
 // The copy button sends currentNote exactly; the preview turns leading spaces into hanging indents.
@@ -2396,6 +2460,7 @@ async function copyText(text) {
 
 async function onCopy() {
   const ok = await copyText(currentNote);
+  logCopy('คัดลอก note');
   const btn = $('#btnCopy'), label = $('#btnCopyText');
   if (ok) {
     btn.classList.add('done'); label.textContent = 'คัดลอกแล้ว';
@@ -2408,6 +2473,7 @@ async function onCopy() {
 }
 
 function runExample(scroll = true) {
+  logExampleAt = Date.now();
   chooseDrug(DRUGS.find(d => d.id === 'ne4'));
   $('#mixAmount').value = '8'; $('#mixUnit').value = 'drug'; $('#mixVolume').value = '500';
   matchMix(); renderMixes();
@@ -2500,12 +2566,18 @@ function init() {
   $('#btnCopy').addEventListener('click', onCopy);
   $('#btnCopyProblem').addEventListener('click', async () => {
     const ok = await copyText(currentProblem), label = $('#btnCopyProblemText');
+    logCopy('คัดลอกปัญหาจากการใช้ยา');
     label.textContent = ok ? 'คัดลอกแล้ว' : 'คัดลอกไม่ได้ เลือกข้อความเอง';
     setTimeout(() => { label.textContent = 'คัดลอก'; }, 2200);
   });
 
+  // anything the person types or picks counts as their own input, not the example
+  document.addEventListener('input', () => { logUserAt = Date.now(); }, true);
+  document.addEventListener('change', () => { logUserAt = Date.now(); }, true);
+  document.addEventListener('click', e => { if (!e.target.closest('#btnExample')) logUserAt = Date.now(); }, true);
   recalc();
   if (new URLSearchParams(location.search).has('example')) runExample(false);
+  logVisit();
   // box widths change on rotate, and digit widths change once the web font arrives
   window.addEventListener('resize', fitInputs);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitInputs);
